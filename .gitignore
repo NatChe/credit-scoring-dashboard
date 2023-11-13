@@ -1,0 +1,9 @@
+.env
+.idea
+.ipynb_checkpoints
+.DS_Store
+__pycache__/
+/data/
+/open-solution-home-credit/
+/kernel-example/
+/corrigé_deploy_ml_api/
