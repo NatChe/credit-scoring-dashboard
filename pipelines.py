@@ -17,13 +17,16 @@ DEFAULT_CONFIG = {
         'cat_imputer': SimpleImputer(strategy='most_frequent'),
         'should_scale': False,
         'scaler': StandardScaler(),
+    },
+    'balancing': {
         'should_oversample': False,
+        'with_categorical': False
     },
     'model_params': {}
 }
 
 
-def get_preprocessing_steps(preprocessing_config):
+def get_preprocessing_steps(preprocessing_config, balancing_config):
     steps = [
         ('cleaner', ApplicationCleaner()),
         ('feature_extractor', ApplicationFeaturesExtractor()),
@@ -38,8 +41,8 @@ def get_preprocessing_steps(preprocessing_config):
     if preprocessing_config['should_scale']:
         steps.append(('scalar', ApplicationScaler(scaler=preprocessing_config['scaler'])))
 
-    if preprocessing_config['should_oversample']:
-        steps.append(('oversample',
+    if balancing_config['should_oversample'] and balancing_config['with_categorical']:
+        steps.append(('smote_nc',
                       SMOTENC(
                           categorical_features='auto',
                           categorical_encoder=OneHotEncoder(sparse_output=False, handle_unknown="ignore"),
@@ -47,6 +50,9 @@ def get_preprocessing_steps(preprocessing_config):
                      )
 
     steps.append(('encoder', ApplicationEncoder()))
+
+    if balancing_config['should_oversample'] and not balancing_config['with_categorical']:
+        steps.append(('smote', SMOTE(random_state=18)))
 
     return steps
 
@@ -65,11 +71,13 @@ def dummy_classifier_pipeline(config):
 
 def log_reg_pipeline(config):
     preprocessing_config = config['preprocessing']
+    balancing_config = config['balancing']
 
-    steps = get_preprocessing_steps(preprocessing_config)
+    steps = get_preprocessing_steps(preprocessing_config, balancing_config)
 
-    if preprocessing_config['should_oversample']:
+    if balancing_config['should_oversample']:
         steps.append(('classifier', LogisticRegression(**config['model_params'])))
+        #print(steps)
         return Pipeline_imb(steps, verbose=True)
 
     preprocessing_pipeline = Pipeline(steps=steps, verbose=True)
