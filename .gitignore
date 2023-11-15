@@ -4,6 +4,7 @@
 .DS_Store
 __pycache__/
 /data/
+/mlruns/
 /open-solution-home-credit/
 /kernel-example/
 /corrigé_deploy_ml_api/

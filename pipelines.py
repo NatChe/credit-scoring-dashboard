@@ -1,8 +1,11 @@
 from sklearn.linear_model import LogisticRegression
+from sklearn.dummy import DummyClassifier
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn import set_config
+from imblearn.pipeline import Pipeline as Pipeline_imb
+from imblearn.over_sampling import SMOTENC, SMOTE
 from transformers import ApplicationCleaner, ApplicationImputer, ApplicationEncoder, ApplicationFeaturesExtractor, ApplicationScaler
 
 set_config(transform_output="pandas")
@@ -13,12 +16,14 @@ DEFAULT_CONFIG = {
         'num_imputer': SimpleImputer(strategy='median'),
         'cat_imputer': SimpleImputer(strategy='most_frequent'),
         'should_scale': False,
-        'scaler': StandardScaler()
-    }
+        'scaler': StandardScaler(),
+        'should_oversample': False,
+    },
+    'model_params': {}
 }
 
 
-def get_preprocessing_pipeline(preprocessing_config):
+def get_preprocessing_steps(preprocessing_config):
     steps = [
         ('cleaner', ApplicationCleaner()),
         ('feature_extractor', ApplicationFeaturesExtractor()),
@@ -30,25 +35,50 @@ def get_preprocessing_pipeline(preprocessing_config):
                                          cat_imputer=preprocessing_config['cat_imputer']))
                      )
 
-    steps.append(('encoder', ApplicationEncoder()))
-
     if preprocessing_config['should_scale']:
         steps.append(('scalar', ApplicationScaler(scaler=preprocessing_config['scaler'])))
 
-    return Pipeline(steps=steps)
+    if preprocessing_config['should_oversample']:
+        steps.append(('oversample',
+                      SMOTENC(
+                          categorical_features='auto',
+                          categorical_encoder=OneHotEncoder(sparse_output=False, handle_unknown="ignore"),
+                          random_state=18))
+                     )
+
+    steps.append(('encoder', ApplicationEncoder()))
+
+    return steps
+
+
+def get_preprocessing_pipeline(preprocessing_config):
+    steps = get_preprocessing_steps(preprocessing_config)
+
+    preprocessing_pipeline = Pipeline(steps=steps, verbose=True)
+
+    return preprocessing_pipeline
+
+
+def dummy_classifier_pipeline(config):
+    return DummyClassifier(strategy=config['strategy'])
 
 
 def log_reg_pipeline(config):
-    preprocessing_pipeline = get_preprocessing_pipeline(config['preprocessing'])
+    preprocessing_config = config['preprocessing']
 
-    steps = [
-        ('preprocessor', preprocessing_pipeline),
-        ('classifier', LogisticRegression())
-    ]
+    steps = get_preprocessing_steps(preprocessing_config)
 
-    return Pipeline(steps)
+    if preprocessing_config['should_oversample']:
+        steps.append(('classifier', LogisticRegression(**config['model_params'])))
+        return Pipeline_imb(steps, verbose=True)
+
+    preprocessing_pipeline = Pipeline(steps=steps, verbose=True)
+    steps = [('preprocessor', preprocessing_pipeline), ('classifier', LogisticRegression(**config['model_params']))]
+
+    return Pipeline(steps, verbose=True)
 
 
 PIPELINES = {
-    'log_regression': log_reg_pipeline
+    'log_regression': log_reg_pipeline,
+    'dummy': dummy_classifier_pipeline
 }
