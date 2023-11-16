@@ -7,11 +7,9 @@ from sklearn.preprocessing import OneHotEncoder
 class ApplicationCleaner(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
-        #print('Fitting cleaner')
         return self
 
     def transform(self, X):
-        #print('Transforming cleaner')
         X['CODE_GENDER'] = X['CODE_GENDER'].replace('XNA', 'Unknown')
         X['DAYS_EMPLOYED'] = X['DAYS_EMPLOYED'].replace(365243, np.nan)
         X['DAYS_LAST_PHONE_CHANGE'] = X['DAYS_LAST_PHONE_CHANGE'].replace(0, np.nan)
@@ -38,7 +36,9 @@ class ApplicationImputer(BaseEstimator, TransformerMixin):
         self.imputer = None
 
     def fit(self, X, y=None):
-        #print('Fitting Imputer')
+        # drop columns with > 60% of null values
+        X = X.dropna(axis=1, thresh=int(0.4 * X.shape[0]))
+
         numerical_features = X.drop('SK_ID_CURR', axis=1).select_dtypes(['int64', 'float64']).columns
         categorical_features = X.select_dtypes(['object']).columns
 
@@ -54,7 +54,6 @@ class ApplicationImputer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        #print('Transforming Imputer')
 
         X = self.imputer.transform(X)
 
@@ -66,7 +65,6 @@ class ApplicationEncoder(BaseEstimator, TransformerMixin):
         self.encoder = None
 
     def fit(self, X, y=None):
-        #print('Fitting Encoder')
         categorical_features = X.select_dtypes(['category']).columns
 
         transformers = [
@@ -80,7 +78,6 @@ class ApplicationEncoder(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        #print('Transforming Encoder')
 
         X = self.encoder.transform(X)
 
@@ -93,7 +90,6 @@ class ApplicationScaler(BaseEstimator, TransformerMixin):
         self.transformer = None
 
     def fit(self, X, y=None):
-        #print('Fitting scalar')
         numerical_features = X.drop('SK_ID_CURR', axis=1).select_dtypes(['int64', 'float64']).columns
         non_binary_numerical_features = [col for col in numerical_features if not col.startswith('FLAG')]
         transformers = [('scaler', self.scaler, non_binary_numerical_features)]
@@ -105,7 +101,6 @@ class ApplicationScaler(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        #print('Transforming scalar')
 
         X = self.transformer.transform(X)
 
@@ -114,12 +109,9 @@ class ApplicationScaler(BaseEstimator, TransformerMixin):
 
 class ApplicationFeaturesExtractor(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
-        #print('Fitting FE')
         return self
 
     def transform(self, X):
-        #print('Transforming FE')
-
         X['DAYS_EMPLOYED_PERC'] = X['DAYS_EMPLOYED'] / X['DAYS_BIRTH']
         X['INCOME_CREDIT_PERC'] = X['AMT_INCOME_TOTAL'] / X['AMT_CREDIT']
         X['INCOME_PER_PERSON'] = X['AMT_INCOME_TOTAL'] / X['CNT_FAM_MEMBERS']
@@ -129,3 +121,18 @@ class ApplicationFeaturesExtractor(BaseEstimator, TransformerMixin):
         X['CHILDREN_RATIO'] = X['CNT_CHILDREN'] / X['CNT_FAM_MEMBERS']
 
         return X
+
+
+class ApplicationFeaturesMerger(BaseEstimator, TransformerMixin):
+    def __init__(self, features_to_merge):
+        self.id_column = 'SK_ID_CURR'
+        self.features_to_merge = features_to_merge
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        print('shape before ', X.shape)
+        X_merged = X.join(self.features_to_merge, how='left', on=self.id_column)
+        print('new shape after merge', X_merged.shape)
+        return X_merged

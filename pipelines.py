@@ -6,7 +6,8 @@ from sklearn.pipeline import Pipeline
 from sklearn import set_config
 from imblearn.pipeline import Pipeline as Pipeline_imb
 from imblearn.over_sampling import SMOTENC, SMOTE
-from transformers import ApplicationCleaner, ApplicationImputer, ApplicationEncoder, ApplicationFeaturesExtractor, ApplicationScaler
+import transformers
+from data_preprocessing import get_bureau_and_balance_features
 
 set_config(transform_output="pandas")
 
@@ -17,6 +18,7 @@ DEFAULT_CONFIG = {
         'cat_imputer': SimpleImputer(strategy='most_frequent'),
         'should_scale': False,
         'scaler': StandardScaler(),
+        'use_bureau': False,
     },
     'balancing': {
         'should_oversample': False,
@@ -26,20 +28,24 @@ DEFAULT_CONFIG = {
 }
 
 
-def get_preprocessing_steps(preprocessing_config, balancing_config):
+def get_preprocessing_steps(preprocessing_config, balancing_config, dev_mode):
     steps = [
-        ('cleaner', ApplicationCleaner()),
-        ('feature_extractor', ApplicationFeaturesExtractor()),
+        ('cleaner', transformers.ApplicationCleaner()),
+        ('feature_extractor', transformers.ApplicationFeaturesExtractor()),
     ]
+
+    if preprocessing_config['use_bureau']:
+        X_bureau_features = get_bureau_and_balance_features(dev_mode)
+        steps.append(('merge_bureau_and_balance', transformers.ApplicationFeaturesMerger(X_bureau_features)))
 
     if preprocessing_config['should_fill_na']:
         steps.append(('imputer',
-                      ApplicationImputer(num_imputer=preprocessing_config['num_imputer'],
-                                         cat_imputer=preprocessing_config['cat_imputer']))
+                      transformers.ApplicationImputer(num_imputer=preprocessing_config['num_imputer'],
+                                                      cat_imputer=preprocessing_config['cat_imputer']))
                      )
 
     if preprocessing_config['should_scale']:
-        steps.append(('scalar', ApplicationScaler(scaler=preprocessing_config['scaler'])))
+        steps.append(('scalar', transformers.ApplicationScaler(scaler=preprocessing_config['scaler'])))
 
     if balancing_config['should_oversample'] and balancing_config['with_categorical']:
         steps.append(('smote_nc',
@@ -49,7 +55,7 @@ def get_preprocessing_steps(preprocessing_config, balancing_config):
                           random_state=18))
                      )
 
-    steps.append(('encoder', ApplicationEncoder()))
+    steps.append(('encoder', transformers.ApplicationEncoder()))
 
     if balancing_config['should_oversample'] and not balancing_config['with_categorical']:
         steps.append(('smote', SMOTE(random_state=18)))
@@ -57,27 +63,18 @@ def get_preprocessing_steps(preprocessing_config, balancing_config):
     return steps
 
 
-def get_preprocessing_pipeline(preprocessing_config):
-    steps = get_preprocessing_steps(preprocessing_config)
-
-    preprocessing_pipeline = Pipeline(steps=steps, verbose=True)
-
-    return preprocessing_pipeline
-
-
 def dummy_classifier_pipeline(config):
     return DummyClassifier(strategy=config['strategy'])
 
 
-def log_reg_pipeline(config):
+def log_reg_pipeline(config, dev_mode=False):
     preprocessing_config = config['preprocessing']
     balancing_config = config['balancing']
 
-    steps = get_preprocessing_steps(preprocessing_config, balancing_config)
+    steps = get_preprocessing_steps(preprocessing_config, balancing_config, dev_mode)
 
     if balancing_config['should_oversample']:
         steps.append(('classifier', LogisticRegression(**config['model_params'])))
-        #print(steps)
         return Pipeline_imb(steps, verbose=True)
 
     preprocessing_pipeline = Pipeline(steps=steps, verbose=True)
