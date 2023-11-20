@@ -10,6 +10,8 @@ class ApplicationCleaner(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
+        X = X.replace([np.inf, -np.inf], np.nan)
+
         X['CODE_GENDER'] = X['CODE_GENDER'].replace('XNA', 'Unknown')
         X['DAYS_EMPLOYED'] = X['DAYS_EMPLOYED'].replace(365243, np.nan)
         X['DAYS_LAST_PHONE_CHANGE'] = X['DAYS_LAST_PHONE_CHANGE'].replace(0, np.nan)
@@ -134,5 +136,6 @@ class ApplicationFeaturesMerger(BaseEstimator, TransformerMixin):
     def transform(self, X):
         print('shape before ', X.shape)
         X_merged = X.join(self.features_to_merge, how='left', on=self.id_column)
+
         print('new shape after merge', X_merged.shape)
         return X_merged

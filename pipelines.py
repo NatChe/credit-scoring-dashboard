@@ -7,7 +7,7 @@ from sklearn import set_config
 from imblearn.pipeline import Pipeline as Pipeline_imb
 from imblearn.over_sampling import SMOTENC, SMOTE
 import transformers
-from data_preprocessing import get_bureau_and_balance_features
+from data_preprocessing import get_bureau_and_balance_features, get_previous_applications_features
 
 set_config(transform_output="pandas")
 
@@ -18,7 +18,8 @@ DEFAULT_CONFIG = {
         'cat_imputer': SimpleImputer(strategy='most_frequent'),
         'should_scale': False,
         'scaler': StandardScaler(),
-        'use_bureau': False,
+        'use_bureau_and_balance': False,
+        'use_previous_applications': False
     },
     'balancing': {
         'should_oversample': False,
@@ -34,9 +35,14 @@ def get_preprocessing_steps(preprocessing_config, balancing_config, dev_mode):
         ('feature_extractor', transformers.ApplicationFeaturesExtractor()),
     ]
 
-    if preprocessing_config['use_bureau']:
+    if preprocessing_config['use_bureau_and_balance']:
         X_bureau_features = get_bureau_and_balance_features(dev_mode)
         steps.append(('merge_bureau_and_balance', transformers.ApplicationFeaturesMerger(X_bureau_features)))
+
+    if preprocessing_config['use_previous_applications']:
+        X_prev_app_features = get_previous_applications_features(dev_mode)
+        print('prev app shape', X_prev_app_features.shape)
+        steps.append(('merge_previous_applications', transformers.ApplicationFeaturesMerger(X_prev_app_features)))
 
     if preprocessing_config['should_fill_na']:
         steps.append(('imputer',
