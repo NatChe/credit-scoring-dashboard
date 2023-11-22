@@ -92,8 +92,10 @@ class ApplicationScaler(BaseEstimator, TransformerMixin):
         self.transformer = None
 
     def fit(self, X, y=None):
+        binary_features = X.columns[X.isin([0, 1]).all()]
         numerical_features = X.drop('SK_ID_CURR', axis=1).select_dtypes(['int64', 'float64']).columns
-        non_binary_numerical_features = [col for col in numerical_features if not col.startswith('FLAG')]
+        non_binary_numerical_features = [col for col in numerical_features if col not in binary_features]
+
         transformers = [('scaler', self.scaler, non_binary_numerical_features)]
 
         self.transformer = ColumnTransformer(transformers=transformers, remainder='passthrough',
@@ -134,8 +136,49 @@ class ApplicationFeaturesMerger(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        print('shape before ', X.shape)
         X_merged = X.join(self.features_to_merge, how='left', on=self.id_column)
 
-        print('new shape after merge', X_merged.shape)
         return X_merged
+
+
+class OutlierRemover(BaseEstimator, TransformerMixin):
+    def __init__(self, factor=1.5):
+        self.factor = factor
+        self.features = []
+        self.lower_bounds = {}
+        self.upper_bounds = {}
+
+    def outlier_detector(self, X, y=None):
+        lower_bounds = {}
+        upper_bounds = {}
+
+        binary_features = X.columns[X.isin([0, 1]).all()]
+        numerical_features = X.drop('SK_ID_CURR', axis=1).select_dtypes(['int64', 'float64']).columns
+
+        self.features = [col for col in numerical_features if col not in binary_features]
+
+        # store the lower and upper bounds
+        for feature in self.features:
+            q1 = X[feature].quantile(0.25)
+            q3 = X[feature].quantile(0.75)
+            iqr = q3 - q1
+
+            lower_bounds[feature] = q1 - (self.factor * iqr)
+            upper_bounds[feature] = q3 + (self.factor * iqr)
+
+        self.lower_bounds = lower_bounds
+        self.upper_bounds = upper_bounds
+
+    def fit(self, X, y=None):
+        self.outlier_detector(X)
+
+        return self
+
+    def transform(self, X, y=None):
+        # cap outliers to the lower or upper bound
+        for feature in self.features:
+            X.loc[X[feature] > self.upper_bounds[feature], feature] = self.upper_bounds[feature]
+            X.loc[X[feature] < self.lower_bounds[feature], feature] = self.lower_bounds[feature]
+
+        return X
+

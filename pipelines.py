@@ -18,6 +18,8 @@ DEFAULT_CONFIG = {
         'cat_imputer': SimpleImputer(strategy='most_frequent'),
         'should_scale': False,
         'scaler': StandardScaler(),
+        'should_remove_outliers': False,
+        'iqr_factor': 1.5,
         'use_bureau_and_balance': False,
         'use_previous_applications': False,
         'use_pos_cash_balance': False,
@@ -62,6 +64,10 @@ def get_preprocessing_steps(preprocessing_config, balancing_config, dev_mode):
     if preprocessing_config['use_credit_card_balance']:
         X_cc_balance_features = data_preprocessing.get_credit_card_balance_features(dev_mode)
         steps.append(('merge_credit_card_balance', transformers.ApplicationFeaturesMerger(X_cc_balance_features)))
+
+    # Remove outliers
+    if preprocessing_config['should_remove_outliers']:
+        steps.append(('outlier_remover', transformers.OutlierRemover(factor=preprocessing_config['iqr_factor'])))
 
     # fill missing values
     if preprocessing_config['should_fill_na']:
