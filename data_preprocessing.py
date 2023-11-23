@@ -3,7 +3,7 @@ import pandas as pd
 import os, gc
 
 RANDOM_SEED = 42
-DEV_SAMPLE_SIZE = 5000
+DEV_SAMPLE_SIZE = 10000
 
 ID_COLUMN = 'SK_ID_CURR'
 TARGET_COLUMN = 'TARGET'
@@ -18,7 +18,7 @@ POS_CASH_BALANCE_FILEPATH = os.path.join(ROOT_DIR, DATA_SOURCE_FOLDER, 'POS_CASH
 INSTALLMENTS_PAYMENTS_FILEPATH = os.path.join(ROOT_DIR, DATA_SOURCE_FOLDER, 'installments_payments.csv')
 CREDIT_CARD_BALANCE_FILEPATH = os.path.join(ROOT_DIR, DATA_SOURCE_FOLDER, 'credit_card_balance.csv')
 
-
+# TODO: refactor
 def load_data(dev_mode=False):
     """
     Loads the data

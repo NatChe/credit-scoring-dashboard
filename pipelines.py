@@ -1,4 +1,5 @@
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.dummy import DummyClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
@@ -129,8 +130,38 @@ def log_reg_pipeline(config, dev_mode=False):
 
     return Pipeline(steps, verbose=verbose)
 
+# TODO: refactor with log_reg_pipeline
+def random_forest_pipeline(config, dev_mode=False):
+    verbose = True if dev_mode else False
+
+    preprocessing_config = config['preprocessing']
+    balancing_config = config['balancing']
+
+    # get preprocessing steps
+    steps = get_preprocessing_steps(preprocessing_config, balancing_config, dev_mode)
+
+    # define the classifier
+    classifier = RandomForestClassifier(
+        random_state=config['model_params']['random_state'],
+        **config['model_params']['params']
+    )
+
+    # call imblearn pipeline if oversampling
+    if balancing_config['should_oversample']:
+        steps.append(('classifier', classifier))
+        return Pipeline_imb(steps, verbose=verbose)
+
+    # call sklearn pipeline
+    preprocessing_pipeline = Pipeline(steps=steps, verbose=verbose)
+    steps = [
+        ('preprocessor', preprocessing_pipeline),
+        ('classifier', classifier)
+    ]
+
+    return Pipeline(steps, verbose=verbose)
 
 PIPELINES = {
     'log_regression': log_reg_pipeline,
+    'random_forest': random_forest_pipeline,
     'dummy': dummy_classifier_pipeline
 }
