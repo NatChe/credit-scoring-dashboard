@@ -6,6 +6,7 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn import set_config
 from lightgbm import LGBMClassifier
+from xgboost import XGBClassifier
 from imblearn.pipeline import Pipeline as Pipeline_imb
 from imblearn.over_sampling import SMOTENC, SMOTE
 import transformers
@@ -100,6 +101,7 @@ def get_preprocessing_steps(preprocessing_config, balancing_config, dev_mode):
 
     return steps
 
+
 def get_preprocessing_pipeline(config, dev_mode=False):
     verbose = True if dev_mode else False
 
@@ -113,7 +115,7 @@ def get_preprocessing_pipeline(config, dev_mode=False):
     if balancing_config['should_oversample']:
         return Pipeline_imb(steps, verbose=verbose)
 
-    return  Pipeline(steps=steps, verbose=verbose)
+    return Pipeline(steps=steps, verbose=verbose)
 
 
 def build_pipeline(config, classifier, dev_mode=False):
@@ -179,10 +181,22 @@ def lightGBM_pipeline(config, dev_mode=False):
     return pipeline
 
 
+def xgboost_pipeline(config, dev_mode=False):
+    classifier = XGBClassifier(
+        seed=config['model_params']['random_state'],
+        **config['model_params']['params']
+    )
+
+    pipeline = build_pipeline(config, classifier, dev_mode)
+
+    return pipeline
+
+
 PIPELINES = {
     'preprocessing': get_preprocessing_pipeline,
     'log_regression': log_reg_pipeline,
     'random_forest': random_forest_pipeline,
     'lightGBM': lightGBM_pipeline,
+    'XGBoost': xgboost_pipeline,
     'dummy': dummy_classifier_pipeline
 }
