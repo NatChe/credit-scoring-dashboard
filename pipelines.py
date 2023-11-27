@@ -5,6 +5,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn import set_config
+from lightgbm import LGBMClassifier
 from imblearn.pipeline import Pipeline as Pipeline_imb
 from imblearn.over_sampling import SMOTENC, SMOTE
 import transformers
@@ -21,6 +22,7 @@ DEFAULT_CONFIG = {
         'scaler': StandardScaler(),
         'should_remove_outliers': False,
         'iqr_factor': 1.5,
+        'should_normalize_columns': False,
         'use_bureau_and_balance': False,
         'use_previous_applications': False,
         'use_pos_cash_balance': False,
@@ -93,7 +95,49 @@ def get_preprocessing_steps(preprocessing_config, balancing_config, dev_mode):
     if balancing_config['should_oversample'] and not balancing_config['with_categorical']:
         steps.append(('smote', SMOTE(random_state=18)))
 
+    if preprocessing_config['should_normalize_columns']:
+        steps.append(('column_normalizer', transformers.ColumnNormalizer()))
+
     return steps
+
+def get_preprocessing_pipeline(config, dev_mode=False):
+    verbose = True if dev_mode else False
+
+    preprocessing_config = config['preprocessing']
+    balancing_config = config['balancing']
+
+    # get preprocessing steps
+    steps = get_preprocessing_steps(preprocessing_config, balancing_config, dev_mode)
+
+    # call imblearn pipeline if oversampling
+    if balancing_config['should_oversample']:
+        return Pipeline_imb(steps, verbose=verbose)
+
+    return  Pipeline(steps=steps, verbose=verbose)
+
+
+def build_pipeline(config, classifier, dev_mode=False):
+    verbose = True if dev_mode else False
+
+    preprocessing_config = config['preprocessing']
+    balancing_config = config['balancing']
+
+    # get preprocessing steps
+    steps = get_preprocessing_steps(preprocessing_config, balancing_config, dev_mode)
+
+    # call imblearn pipeline if oversampling
+    if balancing_config['should_oversample']:
+        steps.append(('classifier', classifier))
+        return Pipeline_imb(steps, verbose=verbose)
+
+    # call sklearn pipeline
+    preprocessing_pipeline = Pipeline(steps=steps, verbose=verbose)
+    steps = [
+        ('preprocessor', preprocessing_pipeline),
+        ('classifier', classifier)
+    ]
+
+    return Pipeline(steps, verbose=verbose)
 
 
 def dummy_classifier_pipeline(config):
@@ -101,67 +145,44 @@ def dummy_classifier_pipeline(config):
 
 
 def log_reg_pipeline(config, dev_mode=False):
-    verbose = True if dev_mode else False
-
-    preprocessing_config = config['preprocessing']
-    balancing_config = config['balancing']
-
-    # get preprocessing steps
-    steps = get_preprocessing_steps(preprocessing_config, balancing_config, dev_mode)
-
-    # define the classifier
     classifier = LogisticRegression(
         random_state=config['model_params']['random_state'],
         max_iter=2000,
         **config['model_params']['params']
     )
 
-    # call imblearn pipeline if oversampling
-    if balancing_config['should_oversample']:
-        steps.append(('classifier', classifier))
-        return Pipeline_imb(steps, verbose=verbose)
+    pipeline = build_pipeline(config, classifier, dev_mode)
 
-    # call sklearn pipeline
-    preprocessing_pipeline = Pipeline(steps=steps, verbose=verbose)
-    steps = [
-        ('preprocessor', preprocessing_pipeline),
-        ('classifier', classifier)
-    ]
+    return pipeline
 
-    return Pipeline(steps, verbose=verbose)
 
-# TODO: refactor with log_reg_pipeline
 def random_forest_pipeline(config, dev_mode=False):
-    verbose = True if dev_mode else False
-
-    preprocessing_config = config['preprocessing']
-    balancing_config = config['balancing']
-
-    # get preprocessing steps
-    steps = get_preprocessing_steps(preprocessing_config, balancing_config, dev_mode)
-
-    # define the classifier
     classifier = RandomForestClassifier(
         random_state=config['model_params']['random_state'],
         **config['model_params']['params']
     )
 
-    # call imblearn pipeline if oversampling
-    if balancing_config['should_oversample']:
-        steps.append(('classifier', classifier))
-        return Pipeline_imb(steps, verbose=verbose)
+    pipeline = build_pipeline(config, classifier, dev_mode)
 
-    # call sklearn pipeline
-    preprocessing_pipeline = Pipeline(steps=steps, verbose=verbose)
-    steps = [
-        ('preprocessor', preprocessing_pipeline),
-        ('classifier', classifier)
-    ]
+    return pipeline
 
-    return Pipeline(steps, verbose=verbose)
+
+def lightGBM_pipeline(config, dev_mode=False):
+    classifier = LGBMClassifier(
+        random_state=config['model_params']['random_state'],
+        n_jobs=-1,
+        **config['model_params']['params']
+    )
+
+    pipeline = build_pipeline(config, classifier, dev_mode)
+
+    return pipeline
+
 
 PIPELINES = {
+    'preprocessing': get_preprocessing_pipeline,
     'log_regression': log_reg_pipeline,
     'random_forest': random_forest_pipeline,
+    'lightGBM': lightGBM_pipeline,
     'dummy': dummy_classifier_pipeline
 }

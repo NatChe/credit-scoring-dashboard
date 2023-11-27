@@ -273,6 +273,7 @@ def get_credit_card_balance_features(dev_mode=False):
 
     # Count credit card lines
     cc_balance_agg['CC_COUNT'] = cc_balance.groupby('SK_ID_CURR').size()
+    cc_balance_agg = cc_balance_agg.replace({True: 1, False: 0})
 
     # clean
     del df_cc_balance, cc_balance
