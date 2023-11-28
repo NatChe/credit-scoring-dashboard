@@ -24,6 +24,7 @@ DEFAULT_CONFIG = {
         'should_remove_outliers': False,
         'iqr_factor': 1.5,
         'should_normalize_columns': False,
+        'should_downcast': False,
         'use_bureau_and_balance': False,
         'use_previous_applications': False,
         'use_pos_cash_balance': False,
@@ -98,6 +99,9 @@ def get_preprocessing_steps(preprocessing_config, balancing_config, dev_mode):
 
     if preprocessing_config['should_normalize_columns']:
         steps.append(('column_normalizer', transformers.ColumnNormalizer()))
+
+    if preprocessing_config['should_downcast']:
+        steps.append(('downcaster', transformers.FeatureDowncaster()))
 
     return steps
 

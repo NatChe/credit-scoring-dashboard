@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import re
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import ColumnTransformer
@@ -187,5 +188,32 @@ class ColumnNormalizer(BaseEstimator, TransformerMixin):
 
     def transform(self, X, y=None):
         X = X.rename(columns=lambda x: re.sub('[^A-Za-z0-9_]+', '_', x))
+
+        return X
+
+
+class FeatureDowncaster(BaseEstimator, TransformerMixin):
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        memory_before = (X.memory_usage(deep=True).sum())/1024/1024
+
+        # cas to uint8 features having only 0 or 1 values
+        binary_features = X.columns[X.isin([0, 1]).all()]
+        for feature in binary_features:
+            X[feature] = X[feature].astype("uint8")
+
+        # integers
+        int_features = X.select_dtypes(['int']).columns
+        for feature in int_features:
+            X[feature] = pd.to_numeric(X[feature], downcast='integer')
+
+        # floats
+        float_features = X.select_dtypes(['float']).columns
+        for feature in float_features:
+            X[feature] = pd.to_numeric(X[feature], downcast='float')
+
+        print(f'Memory reduced from {memory_before} MB to: {(X.memory_usage(deep=True).sum())/1024/1024} MB')
 
         return X
