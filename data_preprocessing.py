@@ -3,7 +3,7 @@ import pandas as pd
 import os, gc
 
 RANDOM_SEED = 42
-DEV_SAMPLE_SIZE = 10000
+DEV_SAMPLE_SIZE = 20000
 
 ID_COLUMN = 'SK_ID_CURR'
 TARGET_COLUMN = 'TARGET'
@@ -18,8 +18,8 @@ POS_CASH_BALANCE_FILEPATH = os.path.join(ROOT_DIR, DATA_SOURCE_FOLDER, 'POS_CASH
 INSTALLMENTS_PAYMENTS_FILEPATH = os.path.join(ROOT_DIR, DATA_SOURCE_FOLDER, 'installments_payments.csv')
 CREDIT_CARD_BALANCE_FILEPATH = os.path.join(ROOT_DIR, DATA_SOURCE_FOLDER, 'credit_card_balance.csv')
 
-# TODO: refactor
-def load_data(dev_mode=False):
+
+def load_application(dev_mode=False):
     """
     Loads the data
 
@@ -27,30 +27,14 @@ def load_data(dev_mode=False):
         dev_mode: if set to True, load only a sample of data
 
     Output:
-
+        pandas DataFrame
     """
 
     num_rows = DEV_SAMPLE_SIZE if dev_mode else None
 
-    raw_data = {}
-
-    print('Loading application_train ...')
     application_train = pd.read_csv(APPLICATION_TRAIN_FILEPATH, nrows=num_rows)
-    raw_data['application'] = application_train
-    raw_data['train_set'] = pd.DataFrame(application_train[[ID_COLUMN, TARGET_COLUMN]])
 
-    print("Loading Done.")
-
-    return raw_data
-
-
-def load_bureau_and_balance(dev_mode=True):
-    num_rows = DEV_SAMPLE_SIZE if dev_mode else None
-
-    raw_data = {'bureau': pd.read_csv(BUREAU_FILEPATH, nrows=num_rows),
-                'bureau_balance': pd.read_csv(BUREAU_BALANCE_FILEPATH, nrows=num_rows)}
-
-    return raw_data
+    return application_train
 
 
 def one_hot_encoder(df, nan_as_category = True):
