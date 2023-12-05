@@ -24,7 +24,10 @@ DEFAULT_CONFIG = {
         'should_remove_outliers': False,
         'iqr_factor': 1.5,
         'should_normalize_columns': False,
+        'should_normalize_distribution': False,
         'should_downcast': False,
+        'should_select_features': False,
+        'features_to_keep': [],
         'use_bureau_and_balance': False,
         'use_previous_applications': False,
         'use_pos_cash_balance': False,
@@ -39,6 +42,7 @@ DEFAULT_CONFIG = {
 }
 
 
+# TODO: refacto the if conditions to test if parameter exists
 def get_preprocessing_steps(preprocessing_config, balancing_config, dev_mode):
     steps = [
         ('cleaner', transformers.ApplicationCleaner()),
@@ -84,6 +88,9 @@ def get_preprocessing_steps(preprocessing_config, balancing_config, dev_mode):
     if preprocessing_config['should_scale']:
         steps.append(('scalar', transformers.ApplicationScaler(scaler=preprocessing_config['scaler'])))
 
+    if preprocessing_config['should_normalize_distribution']:
+        steps.append(('normalizer', transformers.DistributionNormalizer()))
+
     if balancing_config['should_oversample'] and balancing_config['with_categorical']:
         steps.append(('smote_nc',
                       SMOTENC(
@@ -94,14 +101,19 @@ def get_preprocessing_steps(preprocessing_config, balancing_config, dev_mode):
 
     steps.append(('encoder', transformers.ApplicationEncoder()))
 
-    if balancing_config['should_oversample'] and not balancing_config['with_categorical']:
-        steps.append(('smote', SMOTE(random_state=18)))
+    if preprocessing_config['should_select_features']:
+        steps.append(
+            ('feature_selector', transformers.FeatureSelector(features_to_keep=preprocessing_config['features_to_keep']))
+        )
+
+    if preprocessing_config['should_downcast']:
+        steps.append(('downcaster', transformers.FeatureDowncaster()))
 
     if preprocessing_config['should_normalize_columns']:
         steps.append(('column_normalizer', transformers.ColumnNormalizer()))
 
-    if preprocessing_config['should_downcast']:
-        steps.append(('downcaster', transformers.FeatureDowncaster()))
+    if balancing_config['should_oversample'] and not balancing_config['with_categorical']:
+        steps.append(('smote', SMOTE(random_state=18)))
 
     return steps
 

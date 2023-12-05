@@ -3,7 +3,7 @@ import pandas as pd
 import re
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, PowerTransformer
 
 
 class ApplicationCleaner(BaseEstimator, TransformerMixin):
@@ -197,7 +197,7 @@ class FeatureDowncaster(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        memory_before = (X.memory_usage(deep=True).sum())/1024/1024
+        memory_before = (X.memory_usage(deep=True).sum()) / 1024 / 1024
 
         # cas to uint8 features having only 0 or 1 values
         binary_features = X.columns[X.isin([0, 1]).all()]
@@ -214,6 +214,45 @@ class FeatureDowncaster(BaseEstimator, TransformerMixin):
         for feature in float_features:
             X[feature] = pd.to_numeric(X[feature], downcast='float')
 
-        print(f'Memory reduced from {memory_before} MB to: {(X.memory_usage(deep=True).sum())/1024/1024} MB')
+        print(f'Memory reduced from {memory_before} MB to: {(X.memory_usage(deep=True).sum()) / 1024 / 1024} MB')
+
+        return X
+
+
+class FeatureSelector(BaseEstimator, TransformerMixin):
+    def __init__(self, features_to_keep):
+        self.features_to_keep = features_to_keep
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        features_to_drop = [col for col in X.columns if col not in self.features_to_keep]
+
+        X = X.drop(columns=features_to_drop, axis=1)
+        print(f'X shape after column drop: {X.shape} ')
+
+        return X
+
+
+class DistributionNormalizer(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        self.transformer = None
+
+    def fit(self, X, y=None):
+        binary_features = X.columns[X.isin([0, 1]).all()]
+        numerical_features = X.drop('SK_ID_CURR', axis=1).select_dtypes(['int', 'float']).columns
+        non_binary_numerical_features = [col for col in numerical_features if col not in binary_features]
+
+        transformers = [('normalizer', PowerTransformer(standardize=False), non_binary_numerical_features)]
+
+        self.transformer = ColumnTransformer(transformers=transformers, remainder='passthrough',
+                                             verbose_feature_names_out=False)
+        self.transformer.fit(X)
+
+        return self
+
+    def transform(self, X):
+        X = self.transformer.transform(X)
 
         return X
