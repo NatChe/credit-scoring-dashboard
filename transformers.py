@@ -197,7 +197,7 @@ class FeatureDowncaster(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        memory_before = (X.memory_usage(deep=True).sum()) / 1024 / 1024
+        #memory_before = (X.memory_usage(deep=True).sum()) / 1024 / 1024
 
         # cas to uint8 features having only 0 or 1 values
         binary_features = X.columns[X.isin([0, 1]).all()]
@@ -214,7 +214,7 @@ class FeatureDowncaster(BaseEstimator, TransformerMixin):
         for feature in float_features:
             X[feature] = pd.to_numeric(X[feature], downcast='float')
 
-        print(f'Memory reduced from {memory_before} MB to: {(X.memory_usage(deep=True).sum()) / 1024 / 1024} MB')
+        # print(f'Memory reduced from {memory_before} MB to: {(X.memory_usage(deep=True).sum()) / 1024 / 1024} MB')
 
         return X
 
@@ -230,7 +230,7 @@ class FeatureSelector(BaseEstimator, TransformerMixin):
         features_to_drop = [col for col in X.columns if col not in self.features_to_keep]
 
         X = X.drop(columns=features_to_drop, axis=1)
-        print(f'X shape after column drop: {X.shape} ')
+        # print(f'X shape after column drop: {X.shape} ')
 
         return X
 

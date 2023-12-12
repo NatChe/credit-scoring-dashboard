@@ -146,16 +146,16 @@ def build_pipeline(config, classifier, dev_mode=False):
     # call imblearn pipeline if oversampling
     if balancing_config['should_oversample']:
         steps.append(('classifier', classifier))
-        return Pipeline_imb(steps, verbose=verbose)
+        return Pipeline_imb(steps, verbose=False)
 
     # call sklearn pipeline
-    preprocessing_pipeline = Pipeline(steps=steps, verbose=verbose)
+    preprocessing_pipeline = Pipeline(steps=steps, verbose=False)
     steps = [
         ('preprocessor', preprocessing_pipeline),
         ('classifier', classifier)
     ]
 
-    return Pipeline(steps, verbose=verbose)
+    return Pipeline(steps, verbose=False)
 
 
 def dummy_classifier_pipeline(config):
