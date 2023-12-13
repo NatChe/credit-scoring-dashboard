@@ -5,7 +5,6 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, PowerTransformer
 
-
 class ApplicationCleaner(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
