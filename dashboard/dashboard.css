@@ -1,0 +1,5 @@
+div[data-baseweb=input],
+div[data-baseweb=base-input],
+input.st-bn {
+    max-width: 300px;
+}

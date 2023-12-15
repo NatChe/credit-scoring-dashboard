@@ -6,5 +6,5 @@ textColor="#fff"
 font="sans serif"
 
 [server]
-runOnSave=true
+runOnSave=false
 

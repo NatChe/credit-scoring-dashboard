@@ -1,14 +1,38 @@
-from flask import Flask, jsonify, request
-from predict import predict
+from flask import Flask, jsonify, request, abort
+from predict import predict, load_client_data, process_client_data, explain
 
 app = Flask(__name__)
+app.json.sort_keys = False
 
-@app.route('/predict', methods=['POST'])
-def get_prediction():
-    client_id = request.form.get('client_id')
+@app.route('/clients/<client_id>', methods=['GET'])
+def get_client_data(client_id):
+    client_data = load_client_data(client_id)
+
+    if client_data.shape[0] == 0:
+        abort(404)
+
+    return jsonify(client_data['SK_ID_CURR'].to_dict())
+
+
+@app.route('/clients/<client_id>/data', methods=['GET'])
+def get_client_processed_data(client_id):
+    client_data = process_client_data(client_id)
+
+    return jsonify(client_data.to_dict())
+
+
+@app.route('/clients/<client_id>/scores', methods=['GET'])
+def get_prediction(client_id):
     scores = predict(client_id)
 
     return jsonify(scores)
+
+@app.route('/clients/<client_id>/features_explained', methods=['GET'])
+def get_features_explained(client_id):
+    shap_features = explain(client_id)
+
+    return jsonify(shap_features)
+
 
 
 if __name__ == '__main__':
