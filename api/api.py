@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request, abort
-from predict import predict, load_client_data, process_client_data, explain
+from predict import predict, load_client_data, process_client_data, explain, simulate_predict
 
 app = Flask(__name__)
 app.json.sort_keys = False
@@ -32,6 +32,15 @@ def get_features_explained(client_id):
     shap_features = explain(client_id)
 
     return jsonify(shap_features)
+
+
+@app.route('/clients/<client_id>/simulate', methods=['POST'])
+def simulate_score(client_id):
+    payload = request.get_json()
+
+    scores = simulate_predict(payload)
+
+    return jsonify(scores)
 
 
 

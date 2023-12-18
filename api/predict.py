@@ -2,6 +2,8 @@ import os
 import joblib
 import dask.dataframe as dd
 import sys
+
+import pandas as pd
 import shap
 from sklearn import set_config
 
@@ -65,6 +67,26 @@ def explain(client_id):
         'expected_value': tree_explainer.expected_value[1],
         'shap_values': list(shap_values[1][0]),
         'features': X_client_processed.to_dict()
+    }
+
+def simulate_predict(data):
+    set_config(transform_output="pandas")
+
+    model_pipeline = load_model()
+    model = model_pipeline.named_steps["classifier"]
+
+    X_client_simulation = pd.read_json(data)
+
+    print('------')
+    print(data)
+    print('------')
+
+    target = model.predict(X_client_simulation)
+    target_proba = model.predict_proba(X_client_simulation)
+
+    return {
+        'target': int(target[0]),
+        'proba': float(target_proba[::, 1][0])
     }
 
 
