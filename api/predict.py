@@ -9,14 +9,17 @@ from sklearn import set_config
 
 ROOT_DIR = os.getcwd()
 MODEL_PATH = os.path.join(ROOT_DIR, 'model/pipeline_lightGBM.pkl')
-TEST_DATA_PATH = os.path.join(ROOT_DIR, 'data/source/application_test.csv')
+TEST_DATA_PATH = os.path.join(ROOT_DIR, 'data/cleaned/test_processed.csv')
+TRAIN_DATA_PATH = os.path.join(ROOT_DIR, 'data/cleaned/train_processed.csv')
 
 sys.path.insert(0, ROOT_DIR)
 set_config(transform_output="pandas")
 
 
 def load_model():
-    return joblib.load(MODEL_PATH)
+    model_pipeline = joblib.load(MODEL_PATH)
+
+    return model_pipeline.named_steps["classifier"]
 
 
 def load_client_data(client_id):
@@ -24,18 +27,17 @@ def load_client_data(client_id):
     test_df = test_df[test_df['SK_ID_CURR'] == int(client_id)]
     test_df = test_df.compute()
 
+    test_df = test_df.drop('SK_ID_CURR', axis=1)
+
     return test_df
 
 
 def process_client_data(client_id):
     set_config(transform_output="pandas")
 
-    model_pipeline = load_model()
     X_client = load_client_data(client_id)
-    X_client_processed = model_pipeline.named_steps["preprocessor"].transform(X_client)
 
-    return X_client_processed
-
+    return X_client
 
 
 def predict(client_id):
@@ -54,32 +56,25 @@ def predict(client_id):
 
 def explain(client_id):
     set_config(transform_output="pandas")
-    model_pipeline = load_model()
+    model = load_model()
     X_client = load_client_data(client_id)
 
-    model = model_pipeline.named_steps["classifier"]
-    X_client_processed = model_pipeline.named_steps["preprocessor"].transform(X_client)
-
     tree_explainer = shap.TreeExplainer(model)
-    shap_values = tree_explainer.shap_values(X_client_processed)
+    shap_values = tree_explainer.shap_values(X_client)
 
     return {
         'expected_value': tree_explainer.expected_value[1],
         'shap_values': list(shap_values[1][0]),
-        'features': X_client_processed.to_dict()
+        'features': X_client.to_dict()
     }
+
 
 def simulate_predict(data):
     set_config(transform_output="pandas")
 
-    model_pipeline = load_model()
-    model = model_pipeline.named_steps["classifier"]
+    model = load_model()
 
     X_client_simulation = pd.read_json(data)
-
-    print('------')
-    print(data)
-    print('------')
 
     target = model.predict(X_client_simulation)
     target_proba = model.predict_proba(X_client_simulation)
@@ -90,7 +85,11 @@ def simulate_predict(data):
     }
 
 
+def analyse_feature(feature_name):
+    set_config(transform_output="pandas")
 
+    train_df = pd.read_csv(TRAIN_DATA_PATH)
 
-
-
+    return {
+        'mean': train_df[feature_name].mean()
+    }

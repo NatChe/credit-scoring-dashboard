@@ -11,6 +11,7 @@ TARGET_COLUMN = 'TARGET'
 ROOT_DIR = os.curdir
 DATA_SOURCE_FOLDER = 'data/source'
 APPLICATION_TRAIN_FILEPATH = os.path.join(ROOT_DIR, DATA_SOURCE_FOLDER, 'application_train.csv')
+APPLICATION_TEST_FILEPATH = os.path.join(ROOT_DIR, DATA_SOURCE_FOLDER, 'application_test.csv')
 BUREAU_FILEPATH = os.path.join(ROOT_DIR, DATA_SOURCE_FOLDER, 'bureau.csv')
 BUREAU_BALANCE_FILEPATH = os.path.join(ROOT_DIR, DATA_SOURCE_FOLDER, 'bureau_balance.csv')
 PREVIOUS_APPLICATION_FILEPATH = os.path.join(ROOT_DIR, DATA_SOURCE_FOLDER, 'previous_application.csv')
@@ -37,10 +38,28 @@ def load_application(dev_mode=False):
     return application_train
 
 
-def one_hot_encoder(df, nan_as_category = True):
+def load_application_test(dev_mode=False):
+    """
+    Loads the application test data
+
+    Input:
+        dev_mode: if set to True, load only a sample of data
+
+    Output:
+        pandas DataFrame
+    """
+
+    num_rows = DEV_SAMPLE_SIZE if dev_mode else None
+
+    application_test = pd.read_csv(APPLICATION_TEST_FILEPATH, nrows=num_rows)
+
+    return application_test
+
+
+def one_hot_encoder(df, nan_as_category=True):
     original_columns = list(df.columns)
     categorical_columns = [col for col in df.columns if df[col].dtype == 'object']
-    df = pd.get_dummies(df, columns= categorical_columns, dummy_na= nan_as_category)
+    df = pd.get_dummies(df, columns=categorical_columns, dummy_na=nan_as_category)
     new_columns = [c for c in df.columns if c not in original_columns]
     return df, new_columns
 
@@ -136,7 +155,7 @@ def get_previous_applications_features(dev_mode=True):
         'AMT_ANNUITY': ['min', 'max', 'mean'],
         'AMT_APPLICATION': ['min', 'max', 'mean'],
         'AMT_CREDIT': ['min', 'max', 'mean'],
-        #'APP_CREDIT_PERC': ['min', 'max', 'mean', 'var'],
+        # 'APP_CREDIT_PERC': ['min', 'max', 'mean', 'var'],
         'AMT_DOWN_PAYMENT': ['min', 'max', 'mean'],
         'AMT_GOODS_PRICE': ['min', 'max', 'mean'],
         'HOUR_APPR_PROCESS_START': ['min', 'max', 'mean'],
@@ -205,7 +224,7 @@ def get_installments_payments_features(dev_mode=False):
 
     df_installments = pd.read_csv(INSTALLMENTS_PAYMENTS_FILEPATH, nrows=num_rows)
 
-    installments, cat_cols = one_hot_encoder(df_installments, nan_as_category= True)
+    installments, cat_cols = one_hot_encoder(df_installments, nan_as_category=True)
 
     # Percentage and difference paid in each installment (amount paid and installment value)
     installments['PAYMENT_PERC'] = installments['AMT_PAYMENT'] / installments['AMT_INSTALMENT']
@@ -222,7 +241,7 @@ def get_installments_payments_features(dev_mode=False):
         'NUM_INSTALMENT_VERSION': ['nunique'],
         'DPD': ['max', 'mean', 'sum'],
         'DBD': ['max', 'mean', 'sum'],
-       # 'PAYMENT_PERC': ['max', 'mean', 'sum', 'var'],
+        # 'PAYMENT_PERC': ['max', 'mean', 'sum', 'var'],
         'PAYMENT_DIFF': ['max', 'mean', 'sum', 'var'],
         'AMT_INSTALMENT': ['max', 'mean', 'sum'],
         'AMT_PAYMENT': ['min', 'max', 'mean', 'sum'],
@@ -232,7 +251,8 @@ def get_installments_payments_features(dev_mode=False):
         aggregations[cat] = ['mean']
 
     installments_agg = installments.groupby('SK_ID_CURR').agg(aggregations)
-    installments_agg.columns = pd.Index(['INSTAL_' + e[0] + "_" + e[1].upper() for e in installments_agg.columns.tolist()])
+    installments_agg.columns = pd.Index(
+        ['INSTAL_' + e[0] + "_" + e[1].upper() for e in installments_agg.columns.tolist()])
 
     # Count installments accounts
     installments_agg['INSTALL_COUNT'] = installments.groupby('SK_ID_CURR').size()
@@ -248,10 +268,10 @@ def get_credit_card_balance_features(dev_mode=False):
     num_rows = DEV_SAMPLE_SIZE if dev_mode else None
 
     df_cc_balance = pd.read_csv(CREDIT_CARD_BALANCE_FILEPATH, nrows=num_rows)
-    cc_balance, cat_cols = one_hot_encoder(df_cc_balance, nan_as_category= True)
+    cc_balance, cat_cols = one_hot_encoder(df_cc_balance, nan_as_category=True)
 
     # General aggregations
-    cc_balance = cc_balance.drop(['SK_ID_PREV'], axis= 1)
+    cc_balance = cc_balance.drop(['SK_ID_PREV'], axis=1)
     cc_balance_agg = cc_balance.groupby('SK_ID_CURR').agg(['min', 'max', 'mean', 'sum', 'var'])
     cc_balance_agg.columns = pd.Index(['CC_' + e[0] + "_" + e[1].upper() for e in cc_balance_agg.columns.tolist()])
 

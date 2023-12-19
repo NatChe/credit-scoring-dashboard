@@ -90,8 +90,7 @@ if client_id != '':
 
     else:
         tab1, tab2, tab3, tab4 = st.tabs(["Client score", "Client data", "Important Features", "Simulate score"])
-        client_data_processed_response = requests.get(f'{API_BASE_URL}/clients/{client_id}/data')
-        st.session_state['client_data'] = client_data_processed_response.json()
+        #st.session_state['client_data'] = client_response.json()
 
         with tab1:
             st.header("Client risk score")
@@ -103,7 +102,7 @@ if client_id != '':
         with tab2:
             st.header('Client information')
 
-            client_data_df = pd.DataFrame(client_data_processed_response.json())
+            client_data_df = pd.DataFrame(client_response.json())
             client_data_df = client_data_df.transpose().reset_index().rename(columns={'index': 'Feature', '0': 'Value'})
             client_data_df['Description'] = client_data_df['Feature'].map(features_json)
 
@@ -139,7 +138,6 @@ if client_id != '':
             # TODO:
             # display feature importance globale
             # graphiques sur 3 features (à selectionner)
-            # edit features
             # gauge -> style
             # display TARGET
             # deploy cloud
@@ -164,7 +162,7 @@ if client_id != '':
         with tab4:
             st.subheader('Adjust parameters to recalculate the score')
 
-            client_data_edit_df = pd.DataFrame(client_data_processed_response.json())
+            client_data_edit_df = pd.DataFrame(client_response.json())
 
             def handle_change():
                 # concat

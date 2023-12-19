@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request, abort
-from predict import predict, load_client_data, process_client_data, explain, simulate_predict
+from predict import predict, load_client_data, process_client_data, explain, simulate_predict, analyse_feature
 
 app = Flask(__name__)
 app.json.sort_keys = False
@@ -10,13 +10,6 @@ def get_client_data(client_id):
 
     if client_data.shape[0] == 0:
         abort(404)
-
-    return jsonify(client_data['SK_ID_CURR'].to_dict())
-
-
-@app.route('/clients/<client_id>/data', methods=['GET'])
-def get_client_processed_data(client_id):
-    client_data = process_client_data(client_id)
 
     return jsonify(client_data.to_dict())
 
@@ -42,6 +35,12 @@ def simulate_score(client_id):
 
     return jsonify(scores)
 
+
+@app.route('/features/<feature_name>', methods=['GET'])
+def get_feature_profiling(feature_name):
+    feature_profiling = analyse_feature(feature_name)
+
+    return jsonify(feature_profiling)
 
 
 if __name__ == '__main__':
