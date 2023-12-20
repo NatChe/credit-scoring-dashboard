@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request, abort
-from predict import predict, load_client_data, process_client_data, explain, simulate_predict, analyse_feature
+from predict import predict, load_client_data, explain, simulate_predict, analyse_feature, get_features_df
 
 app = Flask(__name__)
 app.json.sort_keys = False
@@ -41,6 +41,14 @@ def get_feature_profiling(feature_name):
     feature_profiling = analyse_feature(feature_name)
 
     return jsonify(feature_profiling)
+
+
+@app.route('/features', methods=['GET'])
+def get_features_profiling():
+    features = request.args.to_dict()['q'].split(',')
+    features_df = get_features_df(features)
+
+    return jsonify(features_df)
 
 
 if __name__ == '__main__':

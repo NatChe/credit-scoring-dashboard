@@ -82,3 +82,9 @@ def analyse_feature(feature_name):
     train_df = pd.read_csv(TRAIN_DATA_PATH)
 
     return train_df[[feature_name, 'TARGET']].to_dict()
+
+
+def get_features_df(features):
+    train_df = pd.read_csv(TRAIN_DATA_PATH)
+
+    return train_df[features + ['TARGET']].to_dict()

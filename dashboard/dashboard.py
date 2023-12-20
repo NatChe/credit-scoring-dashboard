@@ -69,11 +69,13 @@ def display_gauge(score):
     st.plotly_chart(fig, use_container_width=True)
 
 
+@st.cache_data
 def get_feature_global(feature_name):
     feature_response = requests.get(f'{API_BASE_URL}/features/{feature_name}')
     return pd.DataFrame(feature_response.json())
 
 
+@st.cache_data
 def display_countplot(feature_name, client_data, xticklabels=None):
     feature_df = get_feature_global(feature_name)
     feature_desc = features_json[feature_name]
@@ -96,14 +98,15 @@ def display_countplot(feature_name, client_data, xticklabels=None):
     st.pyplot(fig)
 
 
-def display_dist_chart(feature_name, client_data, transform_func=None):
+@st.cache_data
+def display_dist_chart(feature_name, client_data, _transform_func=None):
     feature_df = get_feature_global(feature_name)
     feature_desc = features_json[feature_name]
     client_data = int(client_data) if not client_data.isnull().all() else None
 
-    if transform_func:
-        feature_df[feature_name] = feature_df[feature_name].map(lambda x: transform_func(x))
-        client_data = transform_func(client_data) if client_data else client_data
+    if _transform_func:
+        feature_df[feature_name] = feature_df[feature_name].map(lambda x: _transform_func(x))
+        client_data = _transform_func(client_data) if client_data else client_data
 
     fig, ax = plt.subplots()
     sns.set_style('whitegrid', {'grid.linewidth': .05, 'grid.color': '.85'})
@@ -120,6 +123,7 @@ def display_dist_chart(feature_name, client_data, transform_func=None):
     st.pyplot(fig)
 
 
+@st.cache_data
 def display_boxplot(feature_name, client_data):
     feature_df = get_feature_global(feature_name)
     feature_df['STATUS'] = feature_df['TARGET'].map({0: 'Accepted', 1: 'Rejected'})
@@ -148,6 +152,26 @@ def display_boxplot(feature_name, client_data):
     ax.set_ylabel(None)
     st.pyplot(fig)
 
+
+@st.cache_data
+def display_scatterplot(x, y, client_x, client_y):
+    features_response = requests.get(f'{API_BASE_URL}/features?q={x},{y}')
+    features_df = pd.DataFrame(features_response.json())
+    client_x = int(client_x) if not client_x.isnull().all() else 0
+    client_y = int(client_y) if not client_y.isnull().all() else 0
+
+    fig, ax = plt.subplots()
+    sns.set_style('whitegrid', {'grid.linewidth': .05, 'grid.color': '.85'})
+    sns.scatterplot(data=features_df, x=x, y=y, hue='TARGET')
+
+    plt.plot(client_x, client_y, marker="o", markersize=10, markeredgecolor="red", markerfacecolor="red")
+    plt.ticklabel_format(style='plain', axis='x')
+    plt.ticklabel_format(style='plain', axis='y')
+    ax.set_xlabel(f'{features_json[x]}: {client_x}')
+    ax.set_ylabel(f'{features_json[y]}: {client_y}')
+    plt.legend(labels=['Accepted', 'Rejected'])
+
+    st.pyplot(fig)
 
 st.set_page_config(layout="wide")
 
@@ -219,7 +243,7 @@ if client_id != '':
                     display_dist_chart(
                         feature_name='DAYS_BIRTH',
                         client_data=client_data_df['DAYS_BIRTH'],
-                        transform_func=transform_age
+                        _transform_func=transform_age
                     )
 
                 # display dist plot for selected feature
@@ -255,6 +279,22 @@ if client_id != '':
                             feature_name=box_feature,
                             client_data=client_data_df[box_feature]
                         )
+
+            # multiselect
+            st.divider()
+            col21, col22 = st.columns(2)
+
+            with col21:
+                multi_features = st.multiselect(
+                    'Select 2 features',
+                    cont_options,
+                    max_selections=2
+                    )
+
+                if len(multi_features) == 2:
+                    x = multi_features[0]
+                    y = multi_features[1]
+                    display_scatterplot(x, y, client_data_df[x], client_data_df[y])
 
         with tab3:
             st.header("Important Features")
