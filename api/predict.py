@@ -13,8 +13,6 @@ TEST_DATA_PATH = os.path.join(ROOT_DIR, 'data/cleaned/test_processed.csv')
 TRAIN_DATA_PATH = os.path.join(ROOT_DIR, 'data/cleaned/train_processed.csv')
 
 sys.path.insert(0, ROOT_DIR)
-set_config(transform_output="pandas")
-
 
 def load_model():
     model_pipeline = joblib.load(MODEL_PATH)
@@ -33,7 +31,6 @@ def load_client_data(client_id):
 
 
 def process_client_data(client_id):
-    set_config(transform_output="pandas")
 
     X_client = load_client_data(client_id)
 
@@ -41,7 +38,6 @@ def process_client_data(client_id):
 
 
 def predict(client_id):
-    set_config(transform_output="pandas")
     model = load_model()
     X_client = load_client_data(client_id)
 
@@ -55,7 +51,6 @@ def predict(client_id):
 
 
 def explain(client_id):
-    set_config(transform_output="pandas")
     model = load_model()
     X_client = load_client_data(client_id)
 
@@ -70,8 +65,6 @@ def explain(client_id):
 
 
 def simulate_predict(data):
-    set_config(transform_output="pandas")
-
     model = load_model()
 
     X_client_simulation = pd.read_json(data)
@@ -86,10 +79,6 @@ def simulate_predict(data):
 
 
 def analyse_feature(feature_name):
-    set_config(transform_output="pandas")
-
     train_df = pd.read_csv(TRAIN_DATA_PATH)
 
-    return {
-        'mean': train_df[feature_name].mean()
-    }
+    return train_df[[feature_name, 'TARGET']].to_dict()

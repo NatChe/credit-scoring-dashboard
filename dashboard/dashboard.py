@@ -6,6 +6,8 @@ import requests
 import shap
 from streamlit_shap import st_shap
 import json
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 API_BASE_URL = 'http://127.0.0.1:5000'
 
@@ -46,10 +48,9 @@ PREVIOUS_APPLICATIONS = [
     'REFUSED_AMT_APPLICATION_MIN'
 ]
 
-
-
 with open('features.json') as features_file:
     features_json = json.load(features_file)
+
 
 def display_gauge(score):
     fig = go.Figure(go.Indicator(
@@ -66,6 +67,82 @@ def display_gauge(score):
     ))
 
     st.plotly_chart(fig, use_container_width=True)
+
+
+def get_feature_global(feature_name):
+    feature_response = requests.get(f'{API_BASE_URL}/features/{feature_name}')
+    return pd.DataFrame(feature_response.json())
+
+
+def display_countplot(feature_name, client_data, xticklabels=None):
+    feature_df = get_feature_global(feature_name)
+    feature_desc = features_json[feature_name]
+
+    fig, ax = plt.subplots()
+    sns.set_style('whitegrid', {'grid.linewidth': .05, 'grid.color': '.85'})
+    sns.countplot(feature_df, x=feature_name, hue="TARGET", ax=ax, palette='Set2', hue_order=[0, 1])
+
+    if xticklabels:
+        ax.set_xticklabels(xticklabels)
+        feature_desc = f'{feature_desc}: {xticklabels[client_data]}'
+
+
+    ax.set_xlabel(None)
+    ax.set_ylabel(None)
+    ax.set_title(feature_desc, fontsize=14)
+    plt.legend(labels=['Accepted', 'Rejected'])
+
+    for container in ax.containers:
+        ax.bar_label(container)
+    st.pyplot(fig)
+
+
+def display_dist_chart(feature_name, client_data, transform_func=None):
+    feature_df = get_feature_global(feature_name)
+    feature_desc = features_json[feature_name]
+    client_data = int(client_data)
+
+    if transform_func:
+        feature_df[feature_name] = feature_df[feature_name].map(lambda x: transform_func(x))
+        client_data = transform_func(client_data)
+        feature_desc = f'{feature_desc}: {client_data}'
+
+    fig, ax = plt.subplots()
+    sns.set_style('whitegrid', {'grid.linewidth': .05, 'grid.color': '.85'})
+    sns.kdeplot(data=feature_df, x=feature_name, hue='TARGET', ax=ax, hue_order=[0, 1], palette="Set2")
+    plt.axvline(x=client_data)
+    ax.set_title(feature_desc, fontsize=14)
+    # TODO: display proper labels
+    plt.legend(labels=['Rejected', 'Accepted'])
+    ax.set_xlabel(None)
+    ax.set_ylabel(None)
+    st.pyplot(fig)
+
+
+def display_boxplot(feature_name, client_data):
+    feature_df = get_feature_global(feature_name)
+    feature_df['STATUS'] = feature_df['TARGET'].map({0: 'Accepted', 1: 'Rejected'})
+    feature_desc = features_json[feature_name]
+    client_data = int(client_data)
+
+    fig, ax = plt.subplots()
+    sns.set_style('whitegrid', {'grid.linewidth': .05, 'grid.color': '.85'})
+    sns.boxplot(
+        data=feature_df,
+        x=feature_name,
+        y='STATUS',
+        ax=ax,
+        palette="Set2",
+        width=.8,
+        linewidth=.75,
+        whis=(0, 100)
+    )
+    plt.axvline(x=client_data, color=".3", dashes=(2, 2))
+    ax.set_title(f'{feature_desc}: {client_data}', fontsize=14)
+    plt.ticklabel_format(style='plain', axis='x')
+    ax.set_xlabel(None)
+    ax.set_ylabel(None)
+    st.pyplot(fig)
 
 
 st.set_page_config(layout="wide")
@@ -90,7 +167,7 @@ if client_id != '':
 
     else:
         tab1, tab2, tab3, tab4 = st.tabs(["Client score", "Client data", "Important Features", "Simulate score"])
-        #st.session_state['client_data'] = client_response.json()
+        # st.session_state['client_data'] = client_response.json()
 
         with tab1:
             st.header("Client risk score")
@@ -100,28 +177,33 @@ if client_id != '':
             display_gauge(scores['proba'] * 100)
 
         with tab2:
-            st.header('Client information')
-
+            st.header('Client data compared to other clients')
             client_data_df = pd.DataFrame(client_response.json())
-            client_data_df = client_data_df.transpose().reset_index().rename(columns={'index': 'Feature', '0': 'Value'})
-            client_data_df['Description'] = client_data_df['Feature'].map(features_json)
+            col1, col2, col3 = st.columns(3)
 
-            st.dataframe(
-                client_data_df,
-                hide_index=True,
-                use_container_width=True,
-                column_config={
-                    'Feature': st.column_config.Column(
-                        width="medium"
-                    ),
-                    'Value': st.column_config.Column(
-                        width="small"
-                    ),
-                    'Description': st.column_config.Column(
-                        width="large"
-                    ),
-                }
-            )
+            with col1:
+                display_countplot(
+                    feature_name='CODE_GENDER_F',
+                    client_data=int(client_data_df['CODE_GENDER_F']),
+                    xticklabels=['M', 'F']
+                )
+
+            with col2:
+                def transform_age(x):
+                    return round(-1 * x / 365)
+
+
+                with st.spinner('Loading...'):
+                    display_dist_chart(
+                        feature_name='DAYS_BIRTH',
+                        client_data=client_data_df['DAYS_BIRTH'],
+                        transform_func=transform_age
+                    )
+
+            with col3:
+                with st.spinner('Loading...'):
+                    display_boxplot('AMT_CREDIT', client_data_df['AMT_CREDIT'])
+
 
         with tab3:
             st.header("Important Features")
@@ -141,7 +223,6 @@ if client_id != '':
             # gauge -> style
             # display TARGET
             # deploy cloud
-            # load train csv
 
             st_shap(shap.force_plot(
                 base_value=expected_value,
@@ -163,6 +244,7 @@ if client_id != '':
             st.subheader('Adjust parameters to recalculate the score')
 
             client_data_edit_df = pd.DataFrame(client_response.json())
+
 
             def handle_change():
                 # concat
@@ -191,7 +273,7 @@ if client_id != '':
                     "NAME_FAMILY_STATUS_Married": st.column_config.CheckboxColumn(
                         label="Is married"
                     ),
-                    "NAME_EDUCATION_TYPE_Higher_education":  st.column_config.CheckboxColumn(
+                    "NAME_EDUCATION_TYPE_Higher_education": st.column_config.CheckboxColumn(
                         label="Has higher education"
                     ),
                     "ORGANIZATION_TYPE_Self_employed": st.column_config.CheckboxColumn(
@@ -260,6 +342,3 @@ if client_id != '':
 
             score_simulation = score_simulation_response.json()
             display_gauge(score_simulation['proba'] * 100)
-
-
-

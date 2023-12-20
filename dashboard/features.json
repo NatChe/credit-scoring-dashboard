@@ -10,7 +10,7 @@
  "BUREAU_AMT_CREDIT_SUM_MAX":  "Maxium current credit amount for the Credit Bureau credit",
  "AMT_CREDIT":  "Credit amount of the loan",
  "CODE_GENDER_F":  "Gender of the client",
- "DAYS_BIRTH":  "Client's age in days at the time of application (time only relative to the application)",
+ "DAYS_BIRTH":  "Client's age in days at the time of application",
  "INSTAL_PAYMENT_DIFF_MEAN":  "Mean difference between the installment value and the amount paid in each installment of the previous credit",
  "ACTIVE_AMT_CREDIT_MAX_OVERDUE_MEAN":  "Mean maximal amount overdue on the Credit Bureau active credit so far (at application date of loan in our sample)",
  "INSTAL_DPD_MAX":  "Maximum number of days past due of the installments of previous credit",
