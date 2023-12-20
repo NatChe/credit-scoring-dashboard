@@ -86,7 +86,6 @@ def display_countplot(feature_name, client_data, xticklabels=None):
         ax.set_xticklabels(xticklabels)
         feature_desc = f'{feature_desc}: {xticklabels[client_data]}'
 
-
     ax.set_xlabel(None)
     ax.set_ylabel(None)
     ax.set_title(feature_desc, fontsize=14)
@@ -100,18 +99,20 @@ def display_countplot(feature_name, client_data, xticklabels=None):
 def display_dist_chart(feature_name, client_data, transform_func=None):
     feature_df = get_feature_global(feature_name)
     feature_desc = features_json[feature_name]
-    client_data = int(client_data)
+    client_data = int(client_data) if not client_data.isnull().all() else None
 
     if transform_func:
         feature_df[feature_name] = feature_df[feature_name].map(lambda x: transform_func(x))
-        client_data = transform_func(client_data)
-        feature_desc = f'{feature_desc}: {client_data}'
+        client_data = transform_func(client_data) if client_data else client_data
 
     fig, ax = plt.subplots()
     sns.set_style('whitegrid', {'grid.linewidth': .05, 'grid.color': '.85'})
     sns.kdeplot(data=feature_df, x=feature_name, hue='TARGET', ax=ax, hue_order=[0, 1], palette="Set2")
-    plt.axvline(x=client_data)
-    ax.set_title(feature_desc, fontsize=14)
+
+    if client_data:
+        plt.axvline(x=client_data, color=".3", dashes=(2, 2))
+
+    ax.set_title(f'{feature_desc}: {client_data}', fontsize=14)
     # TODO: display proper labels
     plt.legend(labels=['Rejected', 'Accepted'])
     ax.set_xlabel(None)
@@ -123,7 +124,7 @@ def display_boxplot(feature_name, client_data):
     feature_df = get_feature_global(feature_name)
     feature_df['STATUS'] = feature_df['TARGET'].map({0: 'Accepted', 1: 'Rejected'})
     feature_desc = features_json[feature_name]
-    client_data = int(client_data)
+    client_data = int(client_data) if not client_data.isnull().all() else None
 
     fig, ax = plt.subplots()
     sns.set_style('whitegrid', {'grid.linewidth': .05, 'grid.color': '.85'})
@@ -137,7 +138,10 @@ def display_boxplot(feature_name, client_data):
         linewidth=.75,
         whis=(0, 100)
     )
-    plt.axvline(x=client_data, color=".3", dashes=(2, 2))
+
+    if client_data:
+        plt.axvline(x=client_data, color=".3", dashes=(2, 2))
+
     ax.set_title(f'{feature_desc}: {client_data}', fontsize=14)
     plt.ticklabel_format(style='plain', axis='x')
     ax.set_xlabel(None)
@@ -166,7 +170,7 @@ if client_id != '':
             st.error('An error has occurred')
 
     else:
-        tab1, tab2, tab3, tab4 = st.tabs(["Client score", "Client data", "Important Features", "Simulate score"])
+        tab1, tab2, tab3, tab4 = st.tabs(["Client score", "Client profile", "Important Features", "Simulate score"])
         # st.session_state['client_data'] = client_response.json()
 
         with tab1:
@@ -176,8 +180,8 @@ if client_id != '':
             scores = response.json()
             display_gauge(scores['proba'] * 100)
 
-        with tab2:
-            st.header('Client data compared to other clients')
+        with (tab2):
+            st.header('Client profile compared to other clients')
             client_data_df = pd.DataFrame(client_response.json())
             col1, col2, col3 = st.columns(3)
 
@@ -188,10 +192,28 @@ if client_id != '':
                     xticklabels=['M', 'F']
                 )
 
+                # display countplot with selected feature
+                countplot_feature = st.selectbox(
+                    '',
+                    ['NAME_FAMILY_STATUS_Married',
+                     'NAME_EDUCATION_TYPE_Higher_education',
+                     'ORGANIZATION_TYPE_Self_employed',
+                     'FLAG_OWN_CAR',
+                     'FLAG_DOCUMENT_3'],
+                    index=None,
+                    placeholder="Select a feature..."
+                )
+
+                if countplot_feature:
+                    display_countplot(
+                        feature_name=countplot_feature,
+                        client_data=int(client_data_df[countplot_feature]),
+                        xticklabels=['No', 'Yes']
+                    )
+
             with col2:
                 def transform_age(x):
                     return round(-1 * x / 365)
-
 
                 with st.spinner('Loading...'):
                     display_dist_chart(
@@ -200,10 +222,39 @@ if client_id != '':
                         transform_func=transform_age
                     )
 
+                # display dist plot for selected feature
+                cont_options = ['DAYS_EMPLOYED', 'DAYS_LAST_PHONE_CHANGE'] + BUREAU_INFORMATION + PREVIOUS_APPLICATIONS
+                dist_feature = st.selectbox(
+                    '',
+                    cont_options,
+                    index=None,
+                    placeholder="Select a feature...",
+                    key='dist_select'
+                )
+
+                if dist_feature:
+                    display_dist_chart(
+                        feature_name=dist_feature,
+                        client_data=client_data_df[dist_feature]
+                    )
+
             with col3:
                 with st.spinner('Loading...'):
                     display_boxplot('AMT_CREDIT', client_data_df['AMT_CREDIT'])
 
+                    box_feature = st.selectbox(
+                        '',
+                        cont_options,
+                        index=None,
+                        placeholder="Select a feature...",
+                        key='box_select'
+                    )
+
+                    if box_feature:
+                        display_boxplot(
+                            feature_name=box_feature,
+                            client_data=client_data_df[box_feature]
+                        )
 
         with tab3:
             st.header("Important Features")
