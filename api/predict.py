@@ -5,7 +5,6 @@ import sys
 
 import pandas as pd
 import shap
-from sklearn import set_config
 
 ROOT_DIR = os.getcwd()
 MODEL_PATH = os.path.join(ROOT_DIR, 'model/pipeline_lightGBM.pkl')

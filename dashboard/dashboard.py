@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import requests
 import shap
 from streamlit_shap import st_shap
+import streamlit.components.v1 as components
 import json
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -344,16 +345,19 @@ if client_id != '':
             col_shap1, col_shap2 = st.columns(2)
             with col_shap1:
                 st.subheader('Client feature importance')
-                fig, ax = plt.subplots(figsize=(6, 8))
+                fig, ax = plt.subplots(figsize=(18, 20))
                 shap_plot = shap.decision_plot(
                     base_value=expected_value,
                     shap_values=shap_values,
                     features=features_df,
                     feature_names=list(features_df.columns),
-                    feature_display_range=slice(None, -20, -1),
                     auto_size_plot=False
                 )
-                st_shap(fig)
+                ax.tick_params(axis='y', labelsize=9)
+                ax.tick_params(axis='x', labelsize=9)
+                ax.set_xlabel(None)
+                ax.set_text(fontsize=8)
+                st_shap(fig, height=730, width=600)
 
             with col_shap2:
                 st.subheader('Global feature importance')
