@@ -1,8 +1,8 @@
 {
  "FLAG_DOCUMENT_3": "Did client provide document 3",
  "FLAG_OWN_CAR": "Flag if the client owns a car",
- "PREV_CNT_PAYMENT_MEAN": "Mean term of previous credit \n\n at application of the previous application",
- "CC_AMT_BALANCE_MIN":  "Minimum balance \n\n during the month of previous credit",
+ "PREV_CNT_PAYMENT_MEAN": "Mean term of previous credit \n at application of the previous application",
+ "CC_AMT_BALANCE_MIN":  "Minimum balance \n during the month of previous credit",
  "OWN_CAR_AGE":  "Age of client's car",
  "BUREAU_DAYS_CREDIT_ENDDATE_MAX":  "Maximum remaining duration of CB credit (in days) \n\r at the time of application in Home Credit",
  "PREV_DAYS_DECISION_MIN":  "Relative to current application \n\n when was the decision about the latest \n\n previous application made in days",

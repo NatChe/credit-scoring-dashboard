@@ -57,13 +57,23 @@ def display_gauge(score):
         mode="gauge+number",
         value=score,
         domain={'x': [0, 1], 'y': [0, 1]},
-        title={'text': "Risk"},
+        title={'text': 'Risk', 'font': {'color': '#1F305E', 'size': 24}},
         gauge={'axis': {'range': [0, 100]},
-               'bar': {'color': 'black', 'thickness': 0.3},
-               'steps': [
-                   {'range': [0, 46], 'color': "white"},
-                   {'range': [46, 100], 'color': "pink"}],
-               'threshold': {'line': {'color': "red", 'width': 4}, 'thickness': 0.75, 'value': 50}}
+               'bar': {'color': '#1F305E', 'thickness': 0.2},
+               'borderwidth': 0.5,
+               'bordercolor': 'dimgrey',
+               'steps': [{'range': [0, 10], 'color': '#C6FFDD'},
+                         {'range': [10, 20], 'color': '#D3F5C7'},
+                         {'range': [20, 30], 'color': '#DFECB4'},
+                         {'range': [30, 40], 'color': '#EBE3A0'},
+                         {'range': [40, 50], 'color': '#FBD786'},
+                         {'range': [50, 60], 'color': '#FAC785'},
+                         {'range': [60, 70], 'color': '#FAB683'},
+                         {'range': [70, 80], 'color': '#F9A682'},
+                         {'range': [80, 90], 'color': '#F8917F'},
+                         {'range': [90, 100], 'color': '#f7797d'}
+                         ],
+               'threshold': {'line': {'color': '#960018', 'width': 3}, 'thickness': 1, 'value': 46}}
     ))
 
     st.plotly_chart(fig, use_container_width=True)
@@ -173,6 +183,7 @@ def display_scatterplot(x, y, client_x, client_y):
 
     st.pyplot(fig)
 
+
 st.set_page_config(layout="wide")
 
 with open('./dashboard.css') as f:
@@ -194,7 +205,7 @@ if client_id != '':
             st.error('An error has occurred')
 
     else:
-        tab1, tab2, tab3, tab4 = st.tabs(["Client score", "Client profile", "Important Features", "Simulate score"])
+        tab1, tab2, tab3, tab4 = st.tabs(["Client score", "Important Features", "Client profile", "Simulate score"])
         # st.session_state['client_data'] = client_response.json()
 
         with tab1:
@@ -202,9 +213,16 @@ if client_id != '':
 
             response = requests.get(f'{API_BASE_URL}/clients/{client_id}/scores')
             scores = response.json()
+
+            if scores['target'] == 0:
+                st.success('No risk detected!')
+            else:
+                st.error('Risky client')
+
+
             display_gauge(scores['proba'] * 100)
 
-        with (tab2):
+        with tab3:
             st.header('Client profile compared to other clients')
             client_data_df = pd.DataFrame(client_response.json())
             col1, col2, col3 = st.columns(3)
@@ -238,6 +256,7 @@ if client_id != '':
             with col2:
                 def transform_age(x):
                     return round(-1 * x / 365)
+
 
                 with st.spinner('Loading...'):
                     display_dist_chart(
@@ -289,14 +308,14 @@ if client_id != '':
                     'Select 2 features',
                     cont_options,
                     max_selections=2
-                    )
+                )
 
                 if len(multi_features) == 2:
                     x = multi_features[0]
                     y = multi_features[1]
                     display_scatterplot(x, y, client_data_df[x], client_data_df[y])
 
-        with tab3:
+        with tab2:
             st.header("Important Features")
             st.write('Important features explained')
 
@@ -309,11 +328,10 @@ if client_id != '':
             features_df = pd.DataFrame(features)
 
             # TODO:
-            # display feature importance globale
-            # graphiques sur 3 features (à selectionner)
-            # gauge -> style
-            # display TARGET
             # deploy cloud
+            # hyperopt (pas scikit)
+            # note method
+            # Data Drift
 
             st_shap(shap.force_plot(
                 base_value=expected_value,
@@ -323,13 +341,23 @@ if client_id != '':
                 figsize=(10, 6))
             )
 
-            st_shap(shap.decision_plot(
-                base_value=expected_value,
-                shap_values=shap_values,
-                features=features_df,
-                feature_names=list(features_df.columns),
-                feature_display_range=slice(None, -16, -1)
-            ))
+            col_shap1, col_shap2 = st.columns(2)
+            with col_shap1:
+                st.subheader('Client feature importance')
+                fig, ax = plt.subplots(figsize=(6, 8))
+                shap_plot = shap.decision_plot(
+                    base_value=expected_value,
+                    shap_values=shap_values,
+                    features=features_df,
+                    feature_names=list(features_df.columns),
+                    feature_display_range=slice(None, -20, -1),
+                    auto_size_plot=False
+                )
+                st_shap(fig)
+
+            with col_shap2:
+                st.subheader('Global feature importance')
+                st.image('../assets/shap_tight.jpg')
 
         with tab4:
             st.subheader('Adjust parameters to recalculate the score')
