@@ -2,9 +2,10 @@
 .venv
 .idea
 .ipynb_checkpoints
+.pytest_cache
 .DS_Store
 __pycache__/
-/data/
+/data/source
 /mlruns/
 /open-solution-home-credit/
 /kernel-example/
