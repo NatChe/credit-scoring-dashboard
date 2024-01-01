@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 CURRENT_DIR = os.getcwd()
 FEATURES_JSON_PATH = os.path.join(CURRENT_DIR, './dashboard/features.json')
 CSS_PATH = os.path.join(CURRENT_DIR, './dashboard/dashboard.css')
+GLOBAL_IMPORTANCE_IMG_PATH = os.path.join(CURRENT_DIR, './assets/shap_tight.jpg')
 
 API_BASE_URL = st.secrets["PREDICT_API_URL"]
 
@@ -358,7 +359,7 @@ if client_id != '':
 
             with col_shap2:
                 st.subheader('Global feature importance')
-                st.image('../assets/shap_tight.jpg')
+                st.image(GLOBAL_IMPORTANCE_IMG_PATH)
 
         with tab4:
             st.subheader('Adjust parameters to recalculate the score')
