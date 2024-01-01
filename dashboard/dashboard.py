@@ -5,7 +5,6 @@ import plotly.graph_objects as go
 import requests
 import shap
 from streamlit_shap import st_shap
-import streamlit.components.v1 as components
 import json
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -328,12 +327,6 @@ if client_id != '':
             features = shap_features['features']
             features_df = pd.DataFrame(features)
 
-            # TODO:
-            # deploy cloud
-            # hyperopt (pas scikit)
-            # note method
-            # Data Drift
-
             st_shap(shap.force_plot(
                 base_value=expected_value,
                 shap_values=shap_values,
@@ -356,7 +349,6 @@ if client_id != '':
                 ax.tick_params(axis='y', labelsize=9)
                 ax.tick_params(axis='x', labelsize=9)
                 ax.set_xlabel(None)
-                ax.set_text(fontsize=8)
                 st_shap(fig, height=730, width=600)
 
             with col_shap2:

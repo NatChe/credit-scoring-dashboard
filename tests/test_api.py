@@ -1,6 +1,6 @@
 import pytest
 import json
-from api import app
+from app.api import app
 
 TEST_CLIENT_ID = 100001
 

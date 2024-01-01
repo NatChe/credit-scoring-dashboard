@@ -1,8 +1,9 @@
 from flask import Flask, jsonify, request, abort
-from predict import predict, load_client_data, explain, simulate_predict, analyse_feature, get_features_df
+from app.predict import predict, load_client_data, explain, simulate_predict, analyse_feature, get_features_df
 
 app = Flask(__name__)
 app.json.sort_keys = False
+
 
 @app.route('/clients/<client_id>', methods=['GET'])
 def get_client_data(client_id):

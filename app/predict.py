@@ -1,8 +1,6 @@
 import os
 import joblib
 import dask.dataframe as dd
-import sys
-
 import pandas as pd
 import shap
 
@@ -10,9 +8,6 @@ ROOT_DIR = os.getcwd()
 MODEL_PATH = os.path.join(ROOT_DIR, 'model/pipeline_lightGBM_model.pkl')
 TEST_DATA_PATH = os.path.join(ROOT_DIR, 'data/cleaned/test_processed.csv')
 TRAIN_DATA_PATH = os.path.join(ROOT_DIR, 'data/cleaned/train_processed.csv')
-
-sys.path.insert(0, ROOT_DIR)
-
 
 def load_model():
     model = joblib.load(MODEL_PATH)
