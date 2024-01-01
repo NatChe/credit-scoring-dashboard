@@ -9,7 +9,7 @@ import json
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-API_BASE_URL = 'http://127.0.0.1:5000'
+API_BASE_URL = st.secrets["PREDICT_API_URL"]
 
 PERSONAL_INFORMATION = [
     'DAYS_BIRTH',

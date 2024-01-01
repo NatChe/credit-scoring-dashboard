@@ -8,3 +8,4 @@ __pycache__/
 /data/source
 /mlruns/
 /model/pipeline_lightGBM.pkl
+/dashboard/.streamlit/secrets.toml
