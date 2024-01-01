@@ -11,7 +11,10 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 CURRENT_DIR = path.Path().abspath()
-FEATURES_JSON_PATH = os.path.join(CURRENT_DIR, 'features.json')
+sys.path.append(CURRENT_DIR)
+print(CURRENT_DIR)
+FEATURES_JSON_PATH = os.path.join(CURRENT_DIR, './features.json')
+print(FEATURES_JSON_PATH)
 
 API_BASE_URL = st.secrets["PREDICT_API_URL"]
 
