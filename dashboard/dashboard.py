@@ -1,4 +1,4 @@
-import sys, path
+import sys, path, os
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -10,8 +10,8 @@ import json
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-current_dir = path.Path(__file__).abspath()
-sys.path.append(current_dir.parent.parent)
+CURRENT_DIR = path.Path().abspath()
+FEATURES_JSON_PATH = os.path.join(CURRENT_DIR, 'features.json')
 
 API_BASE_URL = st.secrets["PREDICT_API_URL"]
 
@@ -52,7 +52,7 @@ PREVIOUS_APPLICATIONS = [
     'REFUSED_AMT_APPLICATION_MIN'
 ]
 
-with open('./features.json', 'rb') as features_file:
+with open(FEATURES_JSON_PATH, 'rb') as features_file:
     features_json = json.load(features_file)
 
 
