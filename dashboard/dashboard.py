@@ -332,6 +332,7 @@ if client_id != '':
             shap_values = np.array(shap_features['shap_values'])
             features = shap_features['features']
             features_df = pd.DataFrame(features)
+            shap.initjs()
 
             st_shap(shap.force_plot(
                 base_value=expected_value,
