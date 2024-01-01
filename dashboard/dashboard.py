@@ -11,7 +11,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 current_dir = path.Path(__file__).abspath()
-sys.path.append(current_dir.parent)
+sys.path.append(current_dir.parent.parent)
 
 API_BASE_URL = st.secrets["PREDICT_API_URL"]
 
@@ -52,7 +52,7 @@ PREVIOUS_APPLICATIONS = [
     'REFUSED_AMT_APPLICATION_MIN'
 ]
 
-with open('./features.json') as features_file:
+with open('./features.json', 'rb') as features_file:
     features_json = json.load(features_file)
 
 
