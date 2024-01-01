@@ -1,4 +1,4 @@
-import sys, path, os
+import os
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -196,9 +196,11 @@ with open(CSS_PATH) as f:
     css = f.read()
 
 st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
-st.title("Home Credit Dashboard")
+st.title(":orange[Prêt à dépenser]")
+st.subheader(":gray[Dashboard]")
+st.divider()
 
-client_id = st.text_input('Please provide the client id', value="", placeholder="Ex, 100001")
+client_id = st.text_input('Please provide the client id', value="", placeholder="Ex, 100001, 100005")
 
 if client_id != '':
     # Check if client exists
@@ -212,7 +214,6 @@ if client_id != '':
 
     else:
         tab1, tab2, tab3, tab4 = st.tabs(["Client score", "Important Features", "Client profile", "Simulate score"])
-        # st.session_state['client_data'] = client_response.json()
 
         with tab1:
             st.header("Client risk score")
@@ -332,7 +333,6 @@ if client_id != '':
             shap_values = np.array(shap_features['shap_values'])
             features = shap_features['features']
             features_df = pd.DataFrame(features)
-            shap.initjs()
 
             st_shap(shap.force_plot(
                 base_value=expected_value,
