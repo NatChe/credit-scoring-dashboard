@@ -48,7 +48,7 @@ PREVIOUS_APPLICATIONS = [
     'REFUSED_AMT_APPLICATION_MIN'
 ]
 
-with open('features.json') as features_file:
+with open('./features.json') as features_file:
     features_json = json.load(features_file)
 
 
