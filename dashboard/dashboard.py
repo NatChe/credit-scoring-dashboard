@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 
 CURRENT_DIR = os.getcwd()
 FEATURES_JSON_PATH = os.path.join(CURRENT_DIR, './dashboard/features.json')
+CSS_PATH = os.path.join(CURRENT_DIR, './dashboard/dashboard.css')
 
 API_BASE_URL = st.secrets["PREDICT_API_URL"]
 
@@ -190,7 +191,7 @@ def display_scatterplot(x, y, client_x, client_y):
 
 st.set_page_config(layout="wide")
 
-with open('./dashboard.css') as f:
+with open(CSS_PATH) as f:
     css = f.read()
 
 st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
