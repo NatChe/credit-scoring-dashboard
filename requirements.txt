@@ -14,3 +14,4 @@ matplotlib~=3.8.2
 dask~=2023.12.1
 lightgbm~=4.1.0
 gunicorn~=21.2.0
+path~=16.9.0

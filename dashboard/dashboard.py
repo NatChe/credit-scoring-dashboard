@@ -1,4 +1,4 @@
-import os
+import sys, path
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -10,9 +10,8 @@ import json
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-ROOT_DIR = os.getcwd()
-FEATURES_JSON_PATH = os.path.join(ROOT_DIR, 'features.json')
-CSS_PATH = os.path.join(ROOT_DIR, 'dashboard.css')
+current_dir = path.Path(__file__).abspath()
+sys.path.append(current_dir.parent)
 
 API_BASE_URL = st.secrets["PREDICT_API_URL"]
 
@@ -52,6 +51,9 @@ PREVIOUS_APPLICATIONS = [
     'POS_MONTHS_BALANCE_MAX',
     'REFUSED_AMT_APPLICATION_MIN'
 ]
+
+with open('./features.json') as features_file:
+    features_json = json.load(features_file)
 
 
 def display_gauge(score):
@@ -188,10 +190,7 @@ def display_scatterplot(x, y, client_x, client_y):
 
 st.set_page_config(layout="wide")
 
-with open(FEATURES_JSON_PATH, 'rb') as features_file:
-    features_json = json.load(features_file)
-
-with open(CSS_PATH) as f:
+with open('./dashboard.css') as f:
     css = f.read()
 
 st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
