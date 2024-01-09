@@ -158,7 +158,7 @@ def build_pipeline(config, classifier, dev_mode=False):
     return Pipeline(steps, verbose=False)
 
 
-def dummy_classifier_pipeline(config):
+def dummy_classifier_pipeline(config, dev_mode=False):
     return DummyClassifier(strategy=config['strategy'])
 
 

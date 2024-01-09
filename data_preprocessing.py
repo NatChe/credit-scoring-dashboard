@@ -3,7 +3,7 @@ import pandas as pd
 import os, gc
 
 RANDOM_SEED = 42
-DEV_SAMPLE_SIZE = 50000
+DEV_SAMPLE_SIZE = 100000
 
 ID_COLUMN = 'SK_ID_CURR'
 TARGET_COLUMN = 'TARGET'
