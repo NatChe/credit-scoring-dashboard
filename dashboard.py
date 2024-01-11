@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import requests
 import shap
 from streamlit_shap import st_shap
+import streamlit.components.v1 as components
 import json
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -79,7 +80,7 @@ def display_gauge(score):
                          {'range': [80, 90], 'color': '#F8917F'},
                          {'range': [90, 100], 'color': '#f7797d'}
                          ],
-               'threshold': {'line': {'color': '#960018', 'width': 3}, 'thickness': 1, 'value': 46}}
+               'threshold': {'line': {'color': '#960018', 'width': 3}, 'thickness': 1, 'value': 50}}
     ))
 
     st.plotly_chart(fig, use_container_width=True)
@@ -132,7 +133,7 @@ def display_dist_chart(feature_name, client_data, _transform_func=None):
         plt.axvline(x=client_data, color=".3", dashes=(2, 2))
 
     ax.set_title(f'{feature_desc}: {client_data}', fontsize=14)
-    # TODO: display proper labels
+
     plt.legend(labels=['Rejected', 'Accepted'])
     ax.set_xlabel(None)
     ax.set_ylabel(None)
@@ -190,6 +191,11 @@ def display_scatterplot(x, y, client_x, client_y):
     st.pyplot(fig)
 
 
+def st_shap_js(_plot, height=None):
+    shap_html = f"<head>{shap.getjs()}</head><body>{_plot.html()}</body>"
+    components.html(shap_html, height=height)
+
+
 st.set_page_config(layout="wide")
 
 with open(CSS_PATH) as f:
@@ -200,7 +206,7 @@ st.title(":orange[Prêt à dépenser]")
 st.subheader(":gray[Dashboard]")
 st.divider()
 
-client_id = st.text_input('Please provide the client id', value="", placeholder="Ex, 100001, 100005")
+client_id = st.text_input('Please provide the client id', value="", placeholder="Ex, 100001, 100222")
 
 if client_id != '':
     # Check if client exists
@@ -225,7 +231,6 @@ if client_id != '':
                 st.success('No risk detected!')
             else:
                 st.error('Risky client')
-
 
             display_gauge(scores['proba'] * 100)
 
@@ -334,7 +339,7 @@ if client_id != '':
             features = shap_features['features']
             features_df = pd.DataFrame(features)
 
-            st_shap(shap.force_plot(
+            st_shap_js(shap.force_plot(
                 base_value=expected_value,
                 shap_values=shap_values,
                 features=list(features_df.values[0]),
@@ -356,7 +361,7 @@ if client_id != '':
                 ax.tick_params(axis='y', labelsize=9)
                 ax.tick_params(axis='x', labelsize=9)
                 ax.set_xlabel(None)
-                st_shap(fig, height=730, width=600)
+                st_shap(fig, height=730, width=630)
 
             with col_shap2:
                 st.subheader('Global feature importance')
