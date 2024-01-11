@@ -192,8 +192,8 @@ def display_scatterplot(x, y, client_x, client_y):
 
 
 def st_shap_js(_plot, height=None):
-    shap.initjs()
-    shap_html = f"<head>{shap.getjs()}</head><body>{_plot.html()}</body>"
+    shap_html = f"<head>{shap.getjs()}</head><body>{_plot.html()}<script>{shap.initjs()}</script></body>"
+    #st.write(shap_html)
     components.html(shap_html, height=height)
 
 
@@ -330,7 +330,6 @@ if client_id != '':
 
         with tab2:
             st.header("Important Features")
-            st.write('Important features explained')
 
             shap_features_response = requests.get(f'{API_BASE_URL}/clients/{client_id}/features_explained')
             shap_features = shap_features_response.json()
