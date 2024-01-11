@@ -192,7 +192,8 @@ def display_scatterplot(x, y, client_x, client_y):
 
 
 def st_shap_js(_plot, height=None):
-    shap_html = f"<head>{shap.getjs()}</head><body>{_plot.html()}<script>{shap.initjs()}</script></body>"
+    shap.initjs()
+    shap_html = f"<head>{shap.getjs()}</head><body>{_plot.html()}</body>"
     #st.write(shap_html)
     components.html(shap_html, height=height)
 
