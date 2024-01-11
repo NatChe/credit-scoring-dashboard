@@ -330,7 +330,6 @@ if client_id != '':
                     display_scatterplot(x, y, client_data_df[x], client_data_df[y])
 
         with tab2:
-            st.header("Important Features")
 
             shap_features_response = requests.get(f'{API_BASE_URL}/clients/{client_id}/features_explained')
             shap_features = shap_features_response.json()
@@ -339,14 +338,6 @@ if client_id != '':
             shap_values = np.array(shap_features['shap_values'])
             features = shap_features['features']
             features_df = pd.DataFrame(features)
-
-            st_shap_js(shap.force_plot(
-                base_value=expected_value,
-                shap_values=shap_values,
-                features=list(features_df.values[0]),
-                feature_names=list(features_df.columns),
-                figsize=(10, 6))
-            )
 
             col_shap1, col_shap2 = st.columns(2)
             with col_shap1:
