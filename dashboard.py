@@ -86,13 +86,13 @@ def display_gauge(score):
     st.plotly_chart(fig, use_container_width=True)
 
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def get_feature_global(feature_name):
     feature_response = requests.get(f'{API_BASE_URL}/features/{feature_name}')
     return pd.DataFrame(feature_response.json())
 
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def display_countplot(feature_name, client_data, xticklabels=None):
     feature_df = get_feature_global(feature_name)
     feature_desc = features_json[feature_name]
@@ -115,7 +115,7 @@ def display_countplot(feature_name, client_data, xticklabels=None):
     st.pyplot(fig)
 
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def display_dist_chart(feature_name, client_data, _transform_func=None):
     feature_df = get_feature_global(feature_name)
     feature_desc = features_json[feature_name]
@@ -140,7 +140,7 @@ def display_dist_chart(feature_name, client_data, _transform_func=None):
     st.pyplot(fig)
 
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def display_boxplot(feature_name, client_data):
     feature_df = get_feature_global(feature_name)
     feature_df['STATUS'] = feature_df['TARGET'].map({0: 'Accepted', 1: 'Rejected'})
@@ -170,7 +170,7 @@ def display_boxplot(feature_name, client_data):
     st.pyplot(fig)
 
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def display_scatterplot(x, y, client_x, client_y):
     features_response = requests.get(f'{API_BASE_URL}/features?q={x},{y}')
     features_df = pd.DataFrame(features_response.json())
