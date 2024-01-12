@@ -22,7 +22,7 @@ CREDIT_CARD_BALANCE_FILEPATH = os.path.join(ROOT_DIR, DATA_SOURCE_FOLDER, 'credi
 
 def load_application(dev_mode=False):
     """
-    Loads the data
+    Loads the application data
 
     Input:
         dev_mode: if set to True, load only a sample of data
@@ -57,6 +57,17 @@ def load_application_test(dev_mode=False):
 
 
 def one_hot_encoder(df, nan_as_category=True):
+    """
+    Performs one hot encoding on categorical columns
+
+    Input:
+        df: pandas DataFrame
+        nan_as_category: bool, if True, encode NaN value as a category
+
+    Output:
+        pandas DataFrame, columns array
+    """
+
     original_columns = list(df.columns)
     categorical_columns = [col for col in df.columns if df[col].dtype == 'object']
     df = pd.get_dummies(df, columns=categorical_columns, dummy_na=nan_as_category)
@@ -64,17 +75,29 @@ def one_hot_encoder(df, nan_as_category=True):
     return df, new_columns
 
 
-# TODO: create a transformer
 def get_bureau_and_balance_features(dev_mode=True, nan_as_category=True):
+    """
+    Loads bureau and bureau_balance datasets.
+    Groups values by 'SK_ID_CURR' and performs aggregations.
+
+    Input:
+        dev_mode: if set to True, load only a sample of data
+        nan_as_category: bool, if True, encode NaN value as a category
+
+    Output:
+        aggregated pandas DataFrame
+    """
     num_rows = DEV_SAMPLE_SIZE if dev_mode else None
 
+    # load datasets
     df_bureau = pd.read_csv(BUREAU_FILEPATH, nrows=num_rows)
     df_bureau_balance = pd.read_csv(BUREAU_BALANCE_FILEPATH, nrows=num_rows)
 
+    # one hot encode categorical variables
     bb, bb_cat = one_hot_encoder(df_bureau_balance, nan_as_category)
     bureau, bureau_cat = one_hot_encoder(df_bureau, nan_as_category)
 
-    # Bureau balance: Perform aggregations and merge with bureau.csv
+    # Bureau balance: perform aggregations and merge with bureau
     bb_aggregations = {'MONTHS_BALANCE': ['min', 'max', 'size']}
     for col in bb_cat:
         bb_aggregations[col] = ['mean']
@@ -88,7 +111,7 @@ def get_bureau_and_balance_features(dev_mode=True, nan_as_category=True):
     del bb, bb_agg
     gc.collect()
 
-    # Bureau and bureau_balance numeric features
+    # Bureau and bureau_balance numeric features aggregations setup
     num_aggregations = {
         'DAYS_CREDIT': ['min', 'max', 'mean', 'var'],
         'DAYS_CREDIT_ENDDATE': ['min', 'max', 'mean'],
@@ -105,6 +128,7 @@ def get_bureau_and_balance_features(dev_mode=True, nan_as_category=True):
         'MONTHS_BALANCE_MAX': ['max'],
         'MONTHS_BALANCE_SIZE': ['mean', 'sum']
     }
+
     # Bureau and bureau_balance categorical features
     cat_aggregations = {}
     for cat in bureau_cat: cat_aggregations[cat] = ['mean']
@@ -135,27 +159,38 @@ def get_bureau_and_balance_features(dev_mode=True, nan_as_category=True):
 
 
 def get_previous_applications_features(dev_mode=True):
+    """
+    Loads previous applications dataset.
+    Groups values by 'SK_ID_CURR' and performs aggregations.
+
+    Input:
+        dev_mode: if set to True, load only a sample of data
+
+    Output:
+        aggregated pandas DataFrame
+    """
+
     num_rows = DEV_SAMPLE_SIZE if dev_mode else None
 
+    # load dataset
     df_prev_app = pd.read_csv(PREVIOUS_APPLICATION_FILEPATH, nrows=num_rows)
     prev, cat_cols = one_hot_encoder(df_prev_app, nan_as_category=True)
 
-    # Days 365.243 values -> nan
+    # Set 365.243 values to NaN
     prev['DAYS_FIRST_DRAWING'].replace(365243, np.nan, inplace=True)
     prev['DAYS_FIRST_DUE'].replace(365243, np.nan, inplace=True)
     prev['DAYS_LAST_DUE_1ST_VERSION'].replace(365243, np.nan, inplace=True)
     prev['DAYS_LAST_DUE'].replace(365243, np.nan, inplace=True)
     prev['DAYS_TERMINATION'].replace(365243, np.nan, inplace=True)
 
-    # Add feature: value ask / value received percentage
+    # New feature: amount ask / amount received percentage
     prev['APP_CREDIT_PERC'] = prev['AMT_APPLICATION'] / prev['AMT_CREDIT']
 
-    # Previous applications numeric features
+    # Previous applications numeric features aggregations setup
     num_aggregations = {
         'AMT_ANNUITY': ['min', 'max', 'mean'],
         'AMT_APPLICATION': ['min', 'max', 'mean'],
         'AMT_CREDIT': ['min', 'max', 'mean'],
-        # 'APP_CREDIT_PERC': ['min', 'max', 'mean', 'var'],
         'AMT_DOWN_PAYMENT': ['min', 'max', 'mean'],
         'AMT_GOODS_PRICE': ['min', 'max', 'mean'],
         'HOUR_APPR_PROCESS_START': ['min', 'max', 'mean'],
@@ -192,12 +227,24 @@ def get_previous_applications_features(dev_mode=True):
 
 
 def get_pos_cash_balance_features(dev_mode=False):
+    """
+    Loads POS cash balance dataset.
+    Groups values by 'SK_ID_CURR' and performs aggregations.
+
+    Input:
+        dev_mode: if set to True, load only a sample of data
+
+    Output:
+        aggregated pandas DataFrame
+    """
+
     num_rows = DEV_SAMPLE_SIZE if dev_mode else None
 
+    # load dataset
     df_pos_cash = pd.read_csv(POS_CASH_BALANCE_FILEPATH, nrows=num_rows)
     pos_cash, cat_cols = one_hot_encoder(df_pos_cash, nan_as_category=True)
 
-    # Features
+    # Features aggregations setup
     aggregations = {
         'MONTHS_BALANCE': ['max', 'mean', 'size'],
         'SK_DPD': ['max', 'mean'],
@@ -220,10 +267,21 @@ def get_pos_cash_balance_features(dev_mode=False):
 
 
 def get_installments_payments_features(dev_mode=False):
+    """
+    Loads installments payments dataset.
+    Groups values by 'SK_ID_CURR' and performs aggregations.
+
+    Input:
+        dev_mode: if set to True, load only a sample of data
+
+    Output:
+        aggregated pandas DataFrame
+    """
+
     num_rows = DEV_SAMPLE_SIZE if dev_mode else None
 
+    # load dataset
     df_installments = pd.read_csv(INSTALLMENTS_PAYMENTS_FILEPATH, nrows=num_rows)
-
     installments, cat_cols = one_hot_encoder(df_installments, nan_as_category=True)
 
     # Percentage and difference paid in each installment (amount paid and installment value)
@@ -241,7 +299,6 @@ def get_installments_payments_features(dev_mode=False):
         'NUM_INSTALMENT_VERSION': ['nunique'],
         'DPD': ['max', 'mean', 'sum'],
         'DBD': ['max', 'mean', 'sum'],
-        # 'PAYMENT_PERC': ['max', 'mean', 'sum', 'var'],
         'PAYMENT_DIFF': ['max', 'mean', 'sum', 'var'],
         'AMT_INSTALMENT': ['max', 'mean', 'sum'],
         'AMT_PAYMENT': ['min', 'max', 'mean', 'sum'],
@@ -265,8 +322,20 @@ def get_installments_payments_features(dev_mode=False):
 
 
 def get_credit_card_balance_features(dev_mode=False):
+    """
+    Loads credit card balance dataset.
+    Groups values by 'SK_ID_CURR' and performs aggregations.
+
+    Input:
+        dev_mode: if set to True, load only a sample of data
+
+    Output:
+        aggregated pandas DataFrame
+    """
+
     num_rows = DEV_SAMPLE_SIZE if dev_mode else None
 
+    # load dataset
     df_cc_balance = pd.read_csv(CREDIT_CARD_BALANCE_FILEPATH, nrows=num_rows)
     cc_balance, cat_cols = one_hot_encoder(df_cc_balance, nan_as_category=True)
 
