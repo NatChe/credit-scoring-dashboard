@@ -3,3 +3,21 @@ div[data-baseweb=base-input],
 input.st-bn {
     max-width: 400px;
 }
+
+button[role="tab"] div p,
+.stTextInput label p,
+.stMultiSelect label p {
+    font-size: 16px;
+}
+
+button[role="tab"] div p {
+    font-weight: 600;
+}
+
+.stTabs {
+    margin-top: 16px;
+}
+
+.st-ed {
+    color: rgba(49, 51, 63, 0.8)
+}

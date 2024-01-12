@@ -194,7 +194,6 @@ def display_scatterplot(x, y, client_x, client_y):
 def st_shap_js(_plot, height=None):
     shap.initjs()
     shap_html = f"<head>{shap.getjs()}</head><body>{_plot.html()}</body>"
-    #st.write(shap_html)
     components.html(shap_html, height=height)
 
 
@@ -204,8 +203,8 @@ with open(CSS_PATH) as f:
     css = f.read()
 
 st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
-st.title(":orange[Prêt à dépenser]")
-st.subheader(":gray[Dashboard]")
+st.title(":orange[Prêt à dépenser]", anchor=False)
+st.subheader(":gray[Dashboard]", anchor=False)
 st.divider()
 
 client_id = st.text_input('Please provide the client id', value="", placeholder="Ex, 100001, 100222")
@@ -224,7 +223,7 @@ if client_id != '':
         tab1, tab2, tab3, tab4 = st.tabs(["Client score", "Important Features", "Client profile", "Simulate score"])
 
         with tab1:
-            st.header("Client risk score")
+            st.header("Client risk score", anchor=False)
 
             response = requests.get(f'{API_BASE_URL}/clients/{client_id}/scores')
             scores = response.json()
@@ -237,7 +236,7 @@ if client_id != '':
             display_gauge(scores['proba'] * 100)
 
         with tab3:
-            st.header('Client profile compared to other clients')
+            st.header('Client profile compared to other clients', anchor=False)
             client_data_df = pd.DataFrame(client_response.json())
             col1, col2, col3 = st.columns(3)
 
@@ -341,7 +340,7 @@ if client_id != '':
 
             col_shap1, col_shap2 = st.columns(2)
             with col_shap1:
-                st.subheader('Client feature importance')
+                st.subheader('Client feature importance', anchor=False)
                 fig, ax = plt.subplots(figsize=(18, 20))
                 shap_plot = shap.decision_plot(
                     base_value=expected_value,
@@ -356,11 +355,11 @@ if client_id != '':
                 st_shap(fig, height=730, width=630)
 
             with col_shap2:
-                st.subheader('Global feature importance')
+                st.subheader('Global feature importance', anchor=False)
                 st.image(GLOBAL_IMPORTANCE_IMG_PATH)
 
         with tab4:
-            st.subheader('Adjust parameters to recalculate the score')
+            st.subheader('Adjust parameters to recalculate the score', anchor=False)
 
             client_data_edit_df = pd.DataFrame(client_response.json())
 
