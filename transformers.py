@@ -93,7 +93,7 @@ class ApplicationScaler(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         binary_features = X.columns[X.isin([0, 1]).all()]
-        numerical_features = X.drop('SK_ID_CURR', axis=1).select_dtypes(['int64', 'float64']).columns
+        numerical_features = X.drop('SK_ID_CURR', axis=1, errors='ignore').select_dtypes(['integer', 'floating']).columns
         non_binary_numerical_features = [col for col in numerical_features if col not in binary_features]
 
         transformers = [('scaler', self.scaler, non_binary_numerical_features)]
