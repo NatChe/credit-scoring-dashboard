@@ -1,7 +1,7 @@
 # Credit scoring dashboard 
 
 ## Overview
-The project presents the Credit Score dashboard created and hosted with Streamlit that can ve viewed at [this url](https://credit-scoring-dashboard-vo4t4kjrntvwp3fabtzsss.streamlit.app/).
+The project presents the Credit Score dashboard created and hosted with Streamlit.
 The dashboard's main feature is to display, explain and simulate the client's probability to default for the current loan application.
 The dashboard uses the API developed with Flask (/app) that uses the LightGBM model to make the predictions.
 
@@ -14,3 +14,8 @@ For more details on training methodology please refer to the [Methodology Note](
 2. Display the Feature importance analysis.
 3. Display the client's profile by providing different kinds of plots.
 4. Simulate the client's score by modifying parameters in the client's profile.
+
+<hr>
+<img src="assets/dashboard-1.jpg" alt="score">
+<img src="assets/dashboard-2.jpg" alt="features">
+<img src="assets/dashboard-3.jpg" alt="profile">
